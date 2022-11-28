@@ -146,8 +146,11 @@ class AbstractCar:
 
     def sense(self, win):
         points = []
-        for track_line in TRACK_LINES:
-            for sensor in self.sensors:
+        for sensor in self.sensors:
+            sensed_point = None
+            shortest_point = None
+            for track_line in TRACK_LINES:
+
                 (x1, y1), (x2, y2) = track_line
                 (x3, y3), (x4, y4) = sensor
                 x1 = int(round(x1))
@@ -161,17 +164,24 @@ class AbstractCar:
                 if (max(x1, x2) < min(x3, x4)) or (min(x1, x2) > max(x3, x4)) or (max(y1, y2) < min(y3, y4)) or (min(y1, y2) > max(y3, y4)):
                     pass
                 else:
+
                     if x1 == x2:
 
                         y = int(((y4-y3)/(x4-x3)) * (x1 - x3) + y3)
                         if min(y1, y2) <= y <= max(y1, y2):
                             # pygame.draw.circle(WIN, (0, 255, 0), (x1, y), 5)
-                            points.append(((0, 255, 0), (x1, y), 5))
+                            dist = math.sqrt((x1-x3)**2 + (y-y3)**2)
+                            if shortest_point is None or shortest_point > dist:
+                                shortest_point = dist 
+                                sensed_point = ((0, 255, 0), (x1, y), 5)
                     elif x3 == x4:
                         y = int(((y2-y1)/(x2-x1)) * (x3 - x1) + y1)
                         if min(y3, y4) <= y <= max(y3, y4):
                             # pygame.draw.circle(WIN, ((255, 0, 0), (x3, y), 5))
-                            points.append(((255, 0, 0), (x3, y), 5))
+                            dist = math.sqrt((x3-x3)**2 + (y3-y)**2)
+                            if shortest_point is None or shortest_point > dist:
+                                shortest_point = dist
+                                sensed_point = ((255, 0, 0), (x3, y), 5)
                     else:
                         b1 = ((y2-y1)/(x2-x1))
                         b2 = ((y4-y3)/(x4-x3))
@@ -179,7 +189,11 @@ class AbstractCar:
                             x = ((b2*x3 - b1*x1 + y1 - y3) / (b2 - b1))
                             y = (y1 + b1 * (x - x1))
                             if min(y3, y4) <= y <= max(y3, y4) and min(x3, x4) <= x <= max(x3, x4) and min(x1, x2) <= x <= max(x1, x2):
-                                points.append(((0, 0, 255), (x, y), 5))
+                                dist = math.sqrt((x-x3)**2 + (y3-y)**2)
+                                if shortest_point is None or shortest_point > dist:
+                                    sensed_point = ((0, 0, 255), (x, y), 5)
+            if sensed_point is not None:
+                points.append(sensed_point)
                                 # pygame.draw.circle(WIN, (0, 0, 255), (x, y), 5)
         return points
 
@@ -249,7 +263,7 @@ images = [(GRASS, (0, 0)), (TRACK, (0, 0)),
 
 # Creation of cars
 car_array = []
-for i in range(1, 5):
+for i in range(1, 2):
     temp = PlayerCar(i+5, i+5)
     car_array.append(temp)
 
@@ -264,7 +278,7 @@ while run:
             break
         elif event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
-            pygame.draw.circle(WIN, (0,255,0) , pos, 2)
+            pygame.draw.circle(WIN, (0,255,0), pos, 2)
             print(pos)
 
     for cars in car_array:
