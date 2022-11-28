@@ -6,7 +6,7 @@ from utils import scale_image, blit_rotate_center, draw_sensors
 GRASS = scale_image(pygame.image.load("imgs/grass.jpg"), 2.5)
 TRACK = scale_image(pygame.image.load("imgs/track.png"), 0.9)
 
-LINES = [((35, 130), (35, 650)),
+TRACK_LINES = [((35, 130), (35, 650)),
     ((35, 650), (160, 770)),
     ((160, 770), (670, 770)),
     ((670, 770), (760, 640)),
@@ -33,6 +33,58 @@ LINES = [((35, 130), (35, 650)),
     ((560, 510), (500, 560)),
     ((500, 560), (330, 560)),
     ((330, 560), (300, 510))]
+
+BONUS_LINES = [
+
+((173, 216),(296, 219)),
+    ((171, 201),(299, 112)),
+
+    ((170, 200),(175, 20)),
+    ((39, 131),(168, 202)),
+    ((40, 250),(167, 250)),
+    ((167, 326),(38, 321)),
+    ((37, 427),(165, 427)),
+    ((167, 558),(37, 559)),
+    ((190, 621),(100, 708)),
+    ((249, 662),(252, 769)),
+    ((344, 666),(347, 764)),
+
+
+((420, 667),(434, 764)),
+((535, 673),(548, 767)),
+((582, 672),(671, 768)),
+((627, 626),(717, 692)),
+((660, 590),(760, 641)),
+((662, 502),(762, 501)),
+((662, 402),(754, 405)),
+((660, 313),(763, 306)),
+((661, 224),(759, 218)),
+((662, 189),(758, 106)),
+((715, 67),(640, 159)),
+((621, 130),(669, 25)),
+((588, 22),(583, 126)),
+
+
+
+     ((498, 129),(488, 25)),
+     ((374, 91),(501, 132)),
+     ((420, 242),(498, 133)),
+     ((528, 264),(633, 158)),
+     ((561, 304),(657, 286)),
+     ((566, 369),(660, 366)),
+
+
+
+
+     ((561, 439),(658, 444)),
+     ((563, 510),(658, 523)),
+     ((534, 541),(620, 623)),
+     ((464, 567),(465, 660)),
+     ((354, 564),(356, 659)),
+     ((316, 545),(212, 627)),
+     ((174, 503),(297, 496)),
+     ((294, 414),(170, 405))]
+
 
 TRACK_BORDER = scale_image(pygame.image.load("imgs/track-border.png"), 0.9)
 TRACK_BORDER_MASK = pygame.mask.from_surface(TRACK_BORDER)
@@ -91,7 +143,7 @@ class AbstractCar:
 
     def collide(self):
         car_rect = self.img.get_rect(x=self.x, y=self.y)
-        for line in LINES:
+        for line in TRACK_LINES:
             if car_rect.clipline(line):
                 return True
         return False
@@ -140,35 +192,11 @@ class PlayerCar(AbstractCar):
 
 def draw(win, player_cars):
     win.fill("black")
+    for bonus_line in BONUS_LINES:
+        pygame.draw.line(WIN, ((0,255,255)), *bonus_line)
+    for track_line in TRACK_LINES:
+        pygame.draw.line(WIN, ((200, 200, 200)), *track_line)
 
-
-    pygame.draw.line(WIN, "gray", (35, 130), (35, 650))
-    pygame.draw.line(WIN, "gray", (35, 650), (160, 770))
-    pygame.draw.line(WIN, "gray", (160, 770), (670, 770))
-    pygame.draw.line(WIN, "gray", (670, 770), (760, 640))
-    pygame.draw.line(WIN, "gray", (760, 640), (760, 110))
-    pygame.draw.line(WIN, "gray", (760, 110), (670, 20))
-    pygame.draw.line(WIN, "gray", (670, 20), (430, 20))
-    pygame.draw.line(WIN, "gray", (170, 200), (170, 600))
-    pygame.draw.line(WIN, "gray", (170, 600), (240, 660))
-    pygame.draw.line(WIN, "gray", (240, 660), (580, 670))
-    pygame.draw.line(WIN, "gray", (580, 670), (660, 590))
-    pygame.draw.line(WIN, "gray", (660, 590), (660, 190))
-    pygame.draw.line(WIN, "gray", (35, 130), (130, 20))
-    pygame.draw.line(WIN, "gray", (130, 20), (220, 20))
-    pygame.draw.line(WIN, "gray", (220, 20), (300, 110))
-    pygame.draw.line(WIN, "gray", (300, 110), (300, 510))
-    pygame.draw.line(WIN, "gray", (430, 20), (370, 90))
-    pygame.draw.line(WIN, "gray", (370, 90), (370, 180))
-    pygame.draw.line(WIN, "gray", (370, 180), (420, 240))
-    pygame.draw.line(WIN, "gray", (420, 240), (500, 240))
-    pygame.draw.line(WIN, "gray", (660, 190), (620, 130))
-    pygame.draw.line(WIN, "gray", (620, 130), (500, 130))
-    pygame.draw.line(WIN, "gray", (500, 240), (560, 300))
-    pygame.draw.line(WIN, "gray", (560, 300), (560, 510))
-    pygame.draw.line(WIN, "gray", (560, 510), (500, 560))
-    pygame.draw.line(WIN, "gray", (500, 560), (330, 560))
-    pygame.draw.line(WIN, "gray", (330, 560), (300, 510))
     for car in player_cars:
         car.draw(win)
         # print(TRACK_BORDER_MASK.overlap_area(car.sensors))
@@ -216,6 +244,10 @@ while run:
         if event.type == pygame.QUIT:
             run = False
             break
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            pos = pygame.mouse.get_pos()
+            pygame.draw.circle(WIN, (0,255,0) , pos, 2)
+            print(pos)
 
     for cars in car_array:
         move_car(cars)
