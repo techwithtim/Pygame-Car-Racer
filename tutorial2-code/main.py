@@ -1,5 +1,5 @@
 import pygame
-import time
+import numpy as np
 import math
 from utils import scale_image, blit_rotate_center, draw_sensors
 
@@ -24,7 +24,6 @@ BONUS_LINES = [((173, 216), (296, 219)), ((171, 201), (299, 112)), ((170, 200), 
                ((561, 304), (657, 286)), ((566, 369), (660, 366)), ((561, 439), (658, 444)), ((563, 510), (658, 523)),
                ((534, 541), (620, 623)), ((464, 567), (465, 660)), ((354, 564), (356, 659)), ((316, 545), (212, 627)),
                ((174, 503), (297, 496)), ((294, 414), (170, 405))]
-
 
 TRACK_BORDER = scale_image(pygame.image.load("imgs/track-border.png"), 0.9)
 TRACK_BORDER_MASK = pygame.mask.from_surface(TRACK_BORDER)
@@ -53,9 +52,15 @@ class AbstractCar:
         self.x, self.y = self.START_POS
         self.acceleration = 0.1
         self.score = 0
-        self.sensors = []
         self.index_of_bonus_line = 0
         self.next_bonus_line = BONUS_LINES[self.index_of_bonus_line]
+        self.sensors = []
+        self.input_layer = []
+        self.points_sensor = []
+        self.weights_input_layer = (2 * np.random.rand(6, 8) - 1)
+        self.bias_input_layer = (2 * np.random.rand(1, 6) - 1)
+        self.weights_l1 = (2 * np.random.rand(6, 4) - 1).T
+        self.bias_l1 = (2 * np.random.rand(1, 4) - 1).T
 
     def rotate(self, left=False, right=False):
         if left:
@@ -72,7 +77,7 @@ class AbstractCar:
         self.move()
 
     def move_backward(self):
-        self.vel = max(self.vel - self.acceleration, -self.max_vel/2)
+        self.vel = max(self.vel - self.acceleration, -self.max_vel / 2)
         self.move()
 
     def move(self):
@@ -92,6 +97,7 @@ class AbstractCar:
 
     def sense(self):
         points = []
+        distances = []
         for sensor in self.sensors:
             sensed_point = None
             shortest_point = None
@@ -107,7 +113,8 @@ class AbstractCar:
                 y2 = int(round(y2))
                 y3 = int(round(y3))
                 y4 = int(round(y4))
-                if (max(x1, x2) < min(x3, x4)) or (min(x1, x2) > max(x3, x4)) or (max(y1, y2) < min(y3, y4)) or (min(y1, y2) > max(y3, y4)):
+                if (max(x1, x2) < min(x3, x4)) or (min(x1, x2) > max(x3, x4)) \
+                        or (max(y1, y2) < min(y3, y4)) or (min(y1, y2) > max(y3, y4)):
                     pass
                 else:
                     if x1 == x2 and x3 == x4:
@@ -115,34 +122,41 @@ class AbstractCar:
 
                     elif x1 == x2:
 
-                        y = int(((y4-y3)/(x4-x3)) * (x1 - x3) + y3)
+                        y = int(((y4 - y3) / (x4 - x3)) * (x1 - x3) + y3)
                         if min(y1, y2) <= y <= max(y1, y2):
                             # pygame.draw.circle(WIN, (0, 255, 0), (x1, y), 5)
-                            dist = math.sqrt((x1-x3)**2 + (y-y3)**2)
+                            dist = math.sqrt((x1 - x3) ** 2 + (y - y3) ** 2)
                             if shortest_point is None or shortest_point > dist:
                                 shortest_point = dist
-                                sensed_point = ((255, 0, 0), (x1, y), 5)
+                                sensed_point = ((0, 0, 255), (x1, y), 5)
                     elif x3 == x4:
-                        y = int(((y2-y1)/(x2-x1)) * (x3 - x1) + y1)
+                        y = int(((y2 - y1) / (x2 - x1)) * (x3 - x1) + y1)
                         if min(y3, y4) <= y <= max(y3, y4):
                             # pygame.draw.circle(WIN, ((255, 0, 0), (x3, y), 5))
-                            dist = math.sqrt((x3-x3)**2 + (y3-y)**2)
+                            dist = math.sqrt((x3 - x3) ** 2 + (y3 - y) ** 2)
                             if shortest_point is None or shortest_point > dist:
                                 shortest_point = dist
                                 sensed_point = ((255, 0, 0), (x3, y), 5)
                     else:
-                        b1 = ((y2-y1)/(x2-x1))
-                        b2 = ((y4-y3)/(x4-x3))
+                        b1 = ((y2 - y1) / (x2 - x1))
+                        b2 = ((y4 - y3) / (x4 - x3))
                         if b1 != b2:
-                            x = ((b2*x3 - b1*x1 + y1 - y3) / (b2 - b1))
+                            x = ((b2 * x3 - b1 * x1 + y1 - y3) / (b2 - b1))
                             y = (y1 + b1 * (x - x1))
-                            if min(y3, y4) <= y <= max(y3, y4) and min(x3, x4) <= x <= max(x3, x4) and min(x1, x2) <= x <= max(x1, x2):
-                                dist = math.sqrt((x-x3)**2 + (y3-y)**2)
+                            if min(y3, y4) <= y <= max(y3, y4) and min(x3, x4) <= x <= max(x3, x4) \
+                                    and min(x1, x2) <= x <= max(x1, x2):
+                                dist = math.sqrt((x - x3) ** 2 + (y - y3) ** 2)
                                 if shortest_point is None or shortest_point > dist:
-                                    sensed_point = ((255, 0, 0), (x, y), 5)
-            if sensed_point is not None:
+                                    shortest_point = dist
+                                    sensed_point = ((0, 255, 0), (x, y), 5)
+            if sensed_point is not None and shortest_point is not None:
                 points.append(sensed_point)
-        return points
+                distances.append(shortest_point)
+            else:
+                points.append(None)
+                distances.append(400)
+        self.input_layer = distances
+        self.points_sensor = points
 
     def reset(self):
         self.x, self.y = self.START_POS
@@ -153,13 +167,36 @@ class AbstractCar:
         print(self.score)
         self.score = 0
 
+    def take_action(self):
+
+        self.input_layer = np.array(self.input_layer)
+        weighted_sum_input_layer = np.dot(self.weights_input_layer, self.input_layer) + self.bias_input_layer
+
+        input_layer_results = np.arctan(weighted_sum_input_layer)
+        # print(input_layer_results, "input layer results")
+
+        weighted_sum_layer_1 = np.dot(self.weights_l1, input_layer_results.T) + self.bias_l1
+        # print(weighted_sum_layer_1, "weighted_sum_layer_1")
+        output_layer = (np.arctan(weighted_sum_layer_1))
+
+        moved = False
+        decided_action = np.argmax(output_layer)
+        if decided_action == 0:
+            self.rotate(left=True)
+        elif decided_action == 1:
+            self.rotate(right=True)
+        elif decided_action == 2:
+            self.move_forward()
+        elif decided_action == 3:
+            self.move_backward()
+
     def update_score(self, score):
         self.score += score
 
 
 class PlayerCar(AbstractCar):
     IMG = RED_CAR
-    START_POS = (240, 310)
+    START_POS = (237, 311)
 
     def reduce_speed(self):
         self.vel = max(self.vel - self.acceleration / 2, 0)
@@ -180,29 +217,9 @@ def draw(win, player_cars):
     for track_line in TRACK_LINES:
         pygame.draw.line(WIN, (200, 200, 200), *track_line)
 
-    for c in player_cars:
-        c.draw(win)
-        # print(TRACK_BORDER_MASK.overlap_area(car.sensors))
+    for _car in player_cars:
+        _car.draw(win)
     pygame.display.update()
-
-
-def move_car(c):  # player_car
-    keys = pygame.key.get_pressed()
-    moved = False
-
-    if keys[pygame.K_a]:
-        c.rotate(left=True)
-    if keys[pygame.K_d]:
-        c.rotate(right=True)
-    if keys[pygame.K_w]:
-        moved = True
-        c.move_forward()
-    if keys[pygame.K_s]:
-        moved = True
-        c.move_backward()
-
-    if not moved:
-        c.reduce_speed()
 
 
 run = True
@@ -210,17 +227,31 @@ run = True
 clock = pygame.time.Clock()
 images = [(GRASS, (0, 0)), (TRACK, (0, 0)),
           (FINISH, FINISH_POSITION), (TRACK_BORDER, (0, 0))]
-# player_car = PlayerCar(8, 8)
 
 # Creation of cars
+
+
 car_array = []
-for i in range(1, 2):
-    temp = PlayerCar(i+5, i+5)
+
+for j in range(1, 10):
+    temp = PlayerCar(10, 10)
     car_array.append(temp)
-
+runs = 0
+car_scores_and_values = []
 while run:
-    clock.tick(FPS)
+    if runs <= 200:
+        pass
+    else:
+        print(car_scores_and_values)
+        car_array = []
+        for j in range(1, 10):
+            temp = PlayerCar(10, 10)
+            car_array.append(temp)
+        car_scores_and_values = []
 
+        runs = 0
+
+    clock.tick(FPS)
     pygame.display.update()
     draw(WIN, car_array)
     for event in pygame.event.get():
@@ -231,26 +262,32 @@ while run:
             pos = pygame.mouse.get_pos()
             pygame.draw.circle(WIN, (0, 255, 0), pos, 2)
             print(pos)
-
     for c in car_array:
-        c.score-=1
-        move_car(c)
-        points_sensor = c.sense()
-        for point in points_sensor:
-            pygame.draw.circle(WIN, *point)
+        c.score -= 1
+        c.sense()
+        c.take_action()
+        for point in c.points_sensor:
+            if point is not None:
+                pygame.draw.circle(WIN, *point)
         pygame.display.update()
-
         if c.collide():
             c.crash()
+
+            car_scores_and_values.append((c.score, (c.weights_input_layer, c.bias_input_layer,
+                                                    c.weights_l1, c.bias_l1)))
             c.reset()
-        # finish_poi_cowllide = car.collide(FINISH_MASK, *FINISH_POSITION)
-        rect = c.img.get_rect(topleft=(c.x, c.y))
-        if rect.clipline((c.next_bonus_line)):
-            if c.index_of_bonus_line >= len(BONUS_LINES) - 1:
-                c.index_of_bonus_line = -1
-            c.score += 1000
-            c.index_of_bonus_line+=1
-            print("Bonus!")
-            c.next_bonus_line = BONUS_LINES[c.index_of_bonus_line]
+            car_array.remove(c)
+
+        else:
+            rect = c.img.get_rect(topleft=(c.x, c.y))
+            if rect.clipline(c.next_bonus_line):
+                if c.index_of_bonus_line >= len(BONUS_LINES) - 1:
+                    c.index_of_bonus_line = -1
+                c.score += 1000
+                c.index_of_bonus_line += 1
+                print("Bonus!")
+                c.next_bonus_line = BONUS_LINES[c.index_of_bonus_line]
+    runs += 1
+    print(runs)
 
 pygame.quit()
