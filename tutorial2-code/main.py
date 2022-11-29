@@ -251,7 +251,7 @@ images = [(GRASS, (0, 0)), (TRACK, (0, 0)),
 
 def create_next_generation(_car_scores_and_values):
     print("boom")
-    epsilon = 0.05
+    epsilon = 0.2
     _car_array = []
     if len(_car_scores_and_values) <= 1:
         return None
@@ -267,18 +267,20 @@ def create_next_generation(_car_scores_and_values):
             second_values = values
     twi, tbi, tw1, tb1 = top_values
     swi, sbi, sw1, sb1 = second_values
+
+    _car_array.append(PlayerCar(100, 100, twi, tbi, tw1, tb1))
+    _car_array.append(PlayerCar(100, 100, swi, sbi, sw1, sb1))
+
     nwi = np.zeros((6, 8))
     nbi = np.zeros((1, 6))
     nw1 = np.zeros((4, 6))
     nb1 = np.zeros((1, 4))
-    print("TopG:", twi)
+    ratio = second_score/top_score
     need_to_mutate_wi = []
-    if top_score < 0:
-        epsilon = 0.9
     for y in range(len(twi[0])):
         for x in range(len(twi)):
             if abs(twi[x][y] - swi[x][y]) <= epsilon:
-                nwi[x][y] = twi[x][y]
+                nwi[x][y] = (1-ratio) * twi[x][y] + ratio * swi[x][y]
             else:
                 need_to_mutate_wi.append((x, y))
 
@@ -286,23 +288,24 @@ def create_next_generation(_car_scores_and_values):
     for y in range(len(tw1[0])):
         for x in range(len(tw1)):
 
-            if np.random.random() > epsilon:  # abs(tw1[x][y] - sw1[x][y]) <= epsilon:
+            if abs(tw1[x][y] - sw1[x][y]) <= epsilon:
 
-                nw1[x][y] = tw1[x][y]
+                nw1[x][y] = (1-ratio) * tw1[x][y] + ratio * sw1[x][y]
             else:
                 need_to_mutate_w1.append((x, y))
 
     need_to_mutate_bi = []
     for y in range(len(tbi[0])):
-        if np.random.random() > epsilon:  # abs(tbi[0][y] - sbi[0][y]) <= epsilon:
-            nbi[0][y] = tbi[0][y]
+        if abs(tbi[0][y] - sbi[0][y]) <= epsilon:
+
+            nbi[0][y] = (1-ratio) * tbi[0][y] + ratio * sbi[0][y]
         else:
             need_to_mutate_bi.append(y)
 
     need_to_mutate_b1 = []
     for y in range(len(tb1[0])):
-        if np.random.random() > epsilon:
-            nb1[0][y] = tb1[0][y]  # + sb1[0][y]) / 2
+        if abs(tb1[0][y] - sbi[0][y]) <= epsilon:
+            nb1[0][y] = (1-ratio) * tb1[0][y] + ratio * sb1[0][y]
         else:
             need_to_mutate_b1.append(y)
 
