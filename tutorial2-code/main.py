@@ -6,73 +6,24 @@ from utils import scale_image, blit_rotate_center, draw_sensors
 GRASS = scale_image(pygame.image.load("imgs/grass.jpg"), 2.5)
 TRACK = scale_image(pygame.image.load("imgs/track.png"), 0.9)
 
-TRACK_LINES = [((35, 130), (35, 650)),
-    ((35, 650), (160, 770)),
-    ((160, 770), (670, 770)),
-    ((670, 770), (760, 640)),
-    ((760, 640), (760, 110)),
-    ((760, 110), (670, 20)),
-    ((670, 20), (430, 20)),
-    ((170, 200), (170, 600)),
-    ((170, 600), (240, 660)),
-    ((240, 660), (580, 670)),
-    ((580, 670), (660, 590)),
-    ((660, 590), (660, 190)),
-    ((35, 130), (130, 20)),
-    ((130, 20), (220, 20)),
-    ((220, 20), (300, 110)),
-    ((300, 110), (300, 510)),
-    ((430, 20), (370, 90)),
-    ((370, 90), (370, 180)),
-    ((370, 180), (420, 240)),
-    ((420, 240), (500, 240)),
-    ((660, 190), (620, 130)),
-    ((620, 130), (500, 130)),
-    ((500, 240), (560, 300)),
-    ((560, 300), (560, 510)),
-    ((560, 510), (500, 560)),
-    ((500, 560), (330, 560)),
-    ((330, 560), (300, 510))]
+TRACK_LINES = [((35, 130), (35, 650)), ((35, 650), (160, 770)), ((160, 770), (670, 770)), ((670, 770), (760, 640)),
+               ((760, 640), (760, 110)), ((760, 110), (670, 20)), ((670, 20), (430, 20)), ((170, 200), (170, 600)),
+               ((170, 600), (240, 660)), ((240, 660), (580, 670)), ((580, 670), (660, 590)), ((660, 590), (660, 190)),
+               ((35, 130), (130, 20)), ((130, 20), (220, 20)), ((220, 20), (300, 110)), ((300, 110), (300, 510)),
+               ((430, 20), (370, 90)), ((370, 90), (370, 180)), ((370, 180), (420, 240)), ((420, 240), (500, 240)),
+               ((660, 190), (620, 130)), ((620, 130), (500, 130)), ((500, 240), (560, 300)), ((560, 300), (560, 510)),
+               ((560, 510), (500, 560)), ((500, 560), (330, 560)), ((330, 560), (300, 510))]
 
-BONUS_LINES = [
-((173, 216), (296, 219)),
-((171, 201), (299, 112)),
-((170, 200), (175, 20)),
-((39, 131), (168, 202)),
-((40, 250), (167, 250)),
-((167, 326), (38, 321)),
-((37, 427), (165, 427)),
-((167, 558), (37, 559)),
-((190, 621), (100, 708)),
-((249, 662), (252, 769)),
-((344, 666), (347, 764)),
-((420, 667), (434, 764)),
-((535, 673), (548, 767)),
-((582, 672), (671, 768)),
-((627, 626), (717, 692)),
-((660, 590), (760, 641)),
-((662, 502), (762, 501)),
-((662, 402), (754, 405)),
-((660, 313), (763, 306)),
-((661, 224), (759, 218)),
-((662, 189), (758, 106)),
-((715, 67), (640, 159)),
-((621, 130), (669, 25)),
-((588, 22), (583, 126)),
-((498, 129), (488, 25)),
-((374, 91), (501, 132)),
-((420, 242), (498, 133)),
-((528, 264), (633, 158)),
-((561, 304), (657, 286)),
-((566, 369), (660, 366)),
-((561, 439), (658, 444)),
-((563, 510), (658, 523)),
-((534, 541), (620, 623)),
-((464, 567), (465, 660)),
-((354, 564), (356, 659)),
-((316, 545), (212, 627)),
-((174, 503), (297, 496)),
-((294, 414), (170, 405))]
+BONUS_LINES = [((173, 216), (296, 219)), ((171, 201), (299, 112)), ((170, 200), (175, 20)), ((39, 131), (168, 202)),
+               ((40, 250), (167, 250)), ((167, 326), (38, 321)), ((37, 427), (165, 427)), ((167, 558), (37, 559)),
+               ((190, 621), (100, 708)), ((249, 662), (252, 769)), ((344, 666), (347, 764)), ((420, 667), (434, 764)),
+               ((535, 673), (548, 767)), ((582, 672), (671, 768)), ((627, 626), (717, 692)), ((660, 590), (760, 641)),
+               ((662, 502), (762, 501)), ((662, 402), (754, 405)), ((660, 313), (763, 306)), ((661, 224), (759, 218)),
+               ((662, 189), (758, 106)), ((715, 67), (640, 159)), ((621, 130), (669, 25)), ((588, 22), (583, 126)),
+               ((498, 129), (488, 25)), ((374, 91), (501, 132)), ((420, 242), (498, 133)), ((528, 264), (633, 158)),
+               ((561, 304), (657, 286)), ((566, 369), (660, 366)), ((561, 439), (658, 444)), ((563, 510), (658, 523)),
+               ((534, 541), (620, 623)), ((464, 567), (465, 660)), ((354, 564), (356, 659)), ((316, 545), (212, 627)),
+               ((174, 503), (297, 496)), ((294, 414), (170, 405))]
 
 
 TRACK_BORDER = scale_image(pygame.image.load("imgs/track-border.png"), 0.9)
@@ -103,6 +54,8 @@ class AbstractCar:
         self.acceleration = 0.1
         self.score = 0
         self.sensors = []
+        self.index_of_bonus_line = 0
+        self.next_bonus_line = BONUS_LINES[self.index_of_bonus_line]
 
     def rotate(self, left=False, right=False):
         if left:
@@ -137,14 +90,7 @@ class AbstractCar:
                 return True
         return False
 
-        # if car_rect.clipline((1,1),(800,200)):
-        #     print("BOOM")
-        # car_mask = pygame.mask.from_surface(self.img)
-        # offset = (int(self.x - x), int(self.y - y))
-        # check collision with lines
-        # poi = mask.overlap(car_mask, offset)
-
-    def sense(self, win):
+    def sense(self):
         points = []
         for sensor in self.sensors:
             sensed_point = None
@@ -164,16 +110,18 @@ class AbstractCar:
                 if (max(x1, x2) < min(x3, x4)) or (min(x1, x2) > max(x3, x4)) or (max(y1, y2) < min(y3, y4)) or (min(y1, y2) > max(y3, y4)):
                     pass
                 else:
+                    if x1 == x2 and x3 == x4:
+                        pass
 
-                    if x1 == x2:
+                    elif x1 == x2:
 
                         y = int(((y4-y3)/(x4-x3)) * (x1 - x3) + y3)
                         if min(y1, y2) <= y <= max(y1, y2):
                             # pygame.draw.circle(WIN, (0, 255, 0), (x1, y), 5)
                             dist = math.sqrt((x1-x3)**2 + (y-y3)**2)
                             if shortest_point is None or shortest_point > dist:
-                                shortest_point = dist 
-                                sensed_point = ((0, 255, 0), (x1, y), 5)
+                                shortest_point = dist
+                                sensed_point = ((255, 0, 0), (x1, y), 5)
                     elif x3 == x4:
                         y = int(((y2-y1)/(x2-x1)) * (x3 - x1) + y1)
                         if min(y3, y4) <= y <= max(y3, y4):
@@ -191,16 +139,19 @@ class AbstractCar:
                             if min(y3, y4) <= y <= max(y3, y4) and min(x3, x4) <= x <= max(x3, x4) and min(x1, x2) <= x <= max(x1, x2):
                                 dist = math.sqrt((x-x3)**2 + (y3-y)**2)
                                 if shortest_point is None or shortest_point > dist:
-                                    sensed_point = ((0, 0, 255), (x, y), 5)
+                                    sensed_point = ((255, 0, 0), (x, y), 5)
             if sensed_point is not None:
                 points.append(sensed_point)
-                                # pygame.draw.circle(WIN, (0, 0, 255), (x, y), 5)
         return points
 
     def reset(self):
         self.x, self.y = self.START_POS
         self.angle = 0
         self.vel = 0
+        self.index_of_bonus_line = 0
+        self.next_bonus_line = BONUS_LINES[0]
+        print(self.score)
+        self.score = 0
 
     def update_score(self, score):
         self.score += score
@@ -225,12 +176,12 @@ class PlayerCar(AbstractCar):
 def draw(win, player_cars):
     win.fill("black")
     for bonus_line in BONUS_LINES:
-        pygame.draw.line(WIN, ((0,255,255)), *bonus_line)
+        pygame.draw.line(WIN, (0, 255, 255), *bonus_line)
     for track_line in TRACK_LINES:
-        pygame.draw.line(WIN, ((200, 200, 200)), *track_line)
+        pygame.draw.line(WIN, (200, 200, 200), *track_line)
 
-    for car in player_cars:
-        car.draw(win)
+    for c in player_cars:
+        c.draw(win)
         # print(TRACK_BORDER_MASK.overlap_area(car.sensors))
     pygame.display.update()
 
@@ -278,28 +229,28 @@ while run:
             break
         elif event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
-            pygame.draw.circle(WIN, (0,255,0), pos, 2)
+            pygame.draw.circle(WIN, (0, 255, 0), pos, 2)
             print(pos)
 
-    for cars in car_array:
-        move_car(cars)
-        points_sensor = cars.sense(WIN)
+    for c in car_array:
+        c.score-=1
+        move_car(c)
+        points_sensor = c.sense()
         for point in points_sensor:
             pygame.draw.circle(WIN, *point)
         pygame.display.update()
 
-
-    for car in car_array:
-        if car.collide():
-            car.crash()
-            car.reset()
-        finish_poi_collide = None
-        # finish_poi_collide = car.collide(FINISH_MASK, *FINISH_POSITION)
-        if finish_poi_collide != None:
-            if finish_poi_collide[1] == 0:
-                car.bounce()
-            else:
-                car.score += 1000
-                print("finish")
+        if c.collide():
+            c.crash()
+            c.reset()
+        # finish_poi_cowllide = car.collide(FINISH_MASK, *FINISH_POSITION)
+        rect = c.img.get_rect(topleft=(c.x, c.y))
+        if rect.clipline((c.next_bonus_line)):
+            if c.index_of_bonus_line >= len(BONUS_LINES) - 1:
+                c.index_of_bonus_line = -1
+            c.score += 1000
+            c.index_of_bonus_line+=1
+            print("Bonus!")
+            c.next_bonus_line = BONUS_LINES[c.index_of_bonus_line]
 
 pygame.quit()
