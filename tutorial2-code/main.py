@@ -69,25 +69,20 @@ class AbstractCar:
         if wi is not None:
             self.weights_input_layer = wi
         else:
-            self.weights_input_layer = np.array([[-0.2116233 , -0.95237453 ,-0.61695045 , 0.27281277 , 0.88478289],
- [-0.94002615 ,-0.39234857 ,-0.85998223, -0.82858056 ,-0.08416153],
- [-0.83315242 ,-0.40111318 ,-0.81367016,  0.41053745 ,-0.4578146 ],
- [-0.3906877  ,-0.46502141 , 0.37425967,  0.7345564  , 0.96005561]])
+            self.weights_input_layer = (2 * np.random.rand(*WI_SHAPE) - 1)
+
         if bi is not None:
             self.bias_input_layer = bi
         else:
-            self.bias_input_layer = np.array( [[ 0.32600743 , 0.75529379, -0.59062296, -0.41056584]]
-)
+            self.bias_input_layer = (2 * np.random.rand(*BI_SHAPE) - 1)
         if w1 is not None:
             self.weights_l1 = w1
         else:
-            self.weights_l1 = np.array([[ 0.15833916, -0.77701008,  0.23408044 , 0.29579789],
- [-0.21658433 ,-0.76407066 ,-0.88982546, -0.5190323 ],
- [-0.9160033 ,  0.77160181 , 0.25961472 , 0.8021994 ]])
+            self.weights_l1 = (2 * np.random.rand(*W1_SHAPE) - 1)
         if b1 is not None:
             self.bias_l1 = b1
         else:
-            self.bias_l1 =np.array([[0.58180471 ,0.79943251 ,0.67917306]])
+            self.bias_l1 = (2 * np.random.rand(*B1_SHAPE) - 1)
 
     def rotate(self, left=False, right=False):
         if left:
@@ -211,11 +206,11 @@ class AbstractCar:
 
         if decided_action == 0:
             self.rotate(left=True)
-            self.move_forward()
+            # self.move_forward()
 
         elif decided_action == 1:
             self.rotate(right=True)
-            self.move_forward()
+            # self.move_forward()
 
         elif decided_action == 2:
             self.move_forward()
@@ -313,8 +308,8 @@ def create_next_generation(_car_scores_and_values):
     twi, tbi, tw1, tb1 = top_values
     swi, sbi, sw1, sb1 = second_values
 
-    _car_array.append(PlayerCar(100, 100, twi, tbi, tw1, tb1))
-    _car_array.append(PlayerCar(100, 100, swi, sbi, sw1, sb1))
+    _car_array.append(PlayerCar(20, 15, twi, tbi, tw1, tb1))
+    _car_array.append(PlayerCar(20, 15, swi, sbi, sw1, sb1))
 
     need_to_mutate_wi, nwi = evolve_2_nn(twi, swi)
     need_to_mutate_w1, nw1 = evolve_2_nn(tw1, sw1)
@@ -342,7 +337,7 @@ def create_next_generation(_car_scores_and_values):
             mutation = np.random.uniform(-1, 1)
             print(mutation, "mutiation")
             nb1[0][y] = mutation
-        _car_array.append(PlayerCar(100, 100, nwi, nbi, nw1, nb1))
+        _car_array.append(PlayerCar(55, 10, nwi, nbi, nw1, nb1))
         # if r == 1:
         #     print("i created this loser:", nwi)
 
@@ -356,7 +351,10 @@ for j in range(1, 8):
     car_array.append(temp)
 runs = 0
 car_scores_and_values = []
+generations = 0
+
 while run:
+
     clock.tick(FPS)
     pygame.display.update()
     draw(WIN, car_array)
@@ -370,7 +368,8 @@ while run:
             pos = pygame.mouse.get_pos()
             pygame.draw.circle(WIN, (0, 255, 0), pos, 2)
             print(pos)
-    if len(car_array) != 0 and run <= 600:
+    if len(car_array) != 0 and (runs <= generations + 200):
+        runs += 1
         for c in car_array:
             c.score -= 1
             c.sense()
@@ -398,11 +397,13 @@ while run:
 
     else:
         for _c in car_array:
+            print("RESET")
             car_scores_and_values.append((_c.score, (_c.weights_input_layer, _c.bias_input_layer, _c.weights_l1, _c.bias_l1)))
             _c.reset()
 
         car_array = create_next_generation(car_scores_and_values)
         runs = 0
-    runs += 1
+        generations += 1
+print(generations)
 
 pygame.quit()
