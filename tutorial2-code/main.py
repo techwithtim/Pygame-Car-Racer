@@ -265,6 +265,7 @@ def create_next_generation(_car_scores_and_values):
         elif score >= second_score:
             second_score = score
             second_values = values
+    
     twi, tbi, tw1, tb1 = top_values
     swi, sbi, sw1, sb1 = second_values
 
@@ -279,7 +280,7 @@ def create_next_generation(_car_scores_and_values):
     need_to_mutate_wi = []
     for y in range(len(twi[0])):
         for x in range(len(twi)):
-            if abs(twi[x][y] - swi[x][y]) <= epsilon:
+            if abs(twi[x][y] - swi[x][y]) <= epsilon or np.random.random() <= 0.05:
                 nwi[x][y] = (1-ratio) * twi[x][y] + ratio * swi[x][y]
             else:
                 need_to_mutate_wi.append((x, y))
@@ -288,7 +289,7 @@ def create_next_generation(_car_scores_and_values):
     for y in range(len(tw1[0])):
         for x in range(len(tw1)):
 
-            if abs(tw1[x][y] - sw1[x][y]) <= epsilon:
+            if abs(tw1[x][y] - sw1[x][y]) <= epsilon or np.random.random() <= 0.05:
 
                 nw1[x][y] = (1-ratio) * tw1[x][y] + ratio * sw1[x][y]
             else:
@@ -296,7 +297,7 @@ def create_next_generation(_car_scores_and_values):
 
     need_to_mutate_bi = []
     for y in range(len(tbi[0])):
-        if abs(tbi[0][y] - sbi[0][y]) <= epsilon:
+        if abs(tbi[0][y] - sbi[0][y]) <= epsilon or np.random.random() <= 0.05:
 
             nbi[0][y] = (1-ratio) * tbi[0][y] + ratio * sbi[0][y]
         else:
@@ -304,7 +305,7 @@ def create_next_generation(_car_scores_and_values):
 
     need_to_mutate_b1 = []
     for y in range(len(tb1[0])):
-        if abs(tb1[0][y] - sbi[0][y]) <= epsilon:
+        if abs(tb1[0][y] - sbi[0][y]) <= epsilon or np.random.random() <= 0.05:
             nb1[0][y] = (1-ratio) * tb1[0][y] + ratio * sb1[0][y]
         else:
             need_to_mutate_b1.append(y)
