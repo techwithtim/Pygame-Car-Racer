@@ -23,9 +23,10 @@ def draw_sensors(win, img, top_left, angle):
     angle += 180
     radians = math.radians(angle)
     x, y = center
-    sensor_length = 100
-    pygame.draw.line(win, "white", center, (x + 2 * sensor_length * math.sin(radians), y + 2 * sensor_length * math.cos(radians)))
-    sensors_coordinates.append((center, (x + 2 * sensor_length * math.sin(radians), y + 2 * sensor_length * math.cos(radians))))
+    sensor_length = 250
+    sensor_length_multiplaier = 2
+    pygame.draw.line(win, "white", center, (x + sensor_length_multiplaier * sensor_length * math.sin(radians), y + sensor_length_multiplaier * sensor_length * math.cos(radians)))
+    sensors_coordinates.append((center, (x + sensor_length_multiplaier * sensor_length * math.sin(radians), y + sensor_length_multiplaier * sensor_length * math.cos(radians))))
     # sensors_coordinates.append((x + 1000 * math.sin(radians), y + 1000 * math.cos(radians)))
     radians -= math.pi / 4
     for i in range(7):
