@@ -42,7 +42,9 @@ pygame.display.set_caption("Racing Game!")
 
 FPS = 60
 
-WI_SHAPE = (4, 8)
+INPUT_LAYER_SHAPE = (5, 1)
+
+WI_SHAPE = (4, 5)
 BI_SHAPE = (1, 4)
 
 W1_SHAPE = (3, 4)
@@ -57,29 +59,35 @@ class AbstractCar:
         self.rotation_vel = rotation_vel
         self.angle = 0
         self.x, self.y = self.START_POS
-        self.acceleration = 0.3
+        self.acceleration = 0.1
         self.score = 0
         self.index_of_bonus_line = 0
         self.next_bonus_line = BONUS_LINES[self.index_of_bonus_line]
         self.sensors = []
-        self.input_layer = numpy.zeros((8, 1))
+        self.input_layer = numpy.zeros(INPUT_LAYER_SHAPE)
         self.points_sensor = []
         if wi is not None:
             self.weights_input_layer = wi
         else:
-            self.weights_input_layer = (2 * np.random.rand(*WI_SHAPE) - 1)
+            self.weights_input_layer = np.array([[-0.2116233 , -0.95237453 ,-0.61695045 , 0.27281277 , 0.88478289],
+ [-0.94002615 ,-0.39234857 ,-0.85998223, -0.82858056 ,-0.08416153],
+ [-0.83315242 ,-0.40111318 ,-0.81367016,  0.41053745 ,-0.4578146 ],
+ [-0.3906877  ,-0.46502141 , 0.37425967,  0.7345564  , 0.96005561]])
         if bi is not None:
             self.bias_input_layer = bi
         else:
-            self.bias_input_layer = (2 * np.random.rand(*BI_SHAPE) - 1)
+            self.bias_input_layer = np.array( [[ 0.32600743 , 0.75529379, -0.59062296, -0.41056584]]
+)
         if w1 is not None:
             self.weights_l1 = w1
         else:
-            self.weights_l1 = (2 * np.random.rand(*W1_SHAPE) - 1)
+            self.weights_l1 = np.array([[ 0.15833916, -0.77701008,  0.23408044 , 0.29579789],
+ [-0.21658433 ,-0.76407066 ,-0.88982546, -0.5190323 ],
+ [-0.9160033 ,  0.77160181 , 0.25961472 , 0.8021994 ]])
         if b1 is not None:
             self.bias_l1 = b1
         else:
-            self.bias_l1 = (2 * np.random.rand(*B1_SHAPE) - 1)
+            self.bias_l1 =np.array([[0.58180471 ,0.79943251 ,0.67917306]])
 
     def rotate(self, left=False, right=False):
         if left:
@@ -107,6 +115,12 @@ class AbstractCar:
         self.y -= vertical
         self.x -= horizontal
 
+    def print_model(self):
+        print("Wi:", self.weights_input_layer)
+        print("Bi:", self.bias_input_layer)
+        print("W1:", self.weights_l1)
+        print("B1:", self.bias_l1)
+
     def collide(self):
         car_rect = self.img.get_rect(x=self.x, y=self.y)
         for line in TRACK_LINES:
@@ -117,6 +131,7 @@ class AbstractCar:
     def sense(self):
         points = []
         distances = []
+        self.sensors = [self.sensors[0], self.sensors[1], self.sensors[2], self.sensors[-1], self.sensors[-2]]
         for sensor in self.sensors:
             sensed_point = None
             shortest_point = None
@@ -348,12 +363,14 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
+            for _car in car_array:
+                _car.print_model()
             break
         elif event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
             pygame.draw.circle(WIN, (0, 255, 0), pos, 2)
             print(pos)
-    if len(car_array) != 0 and run <= 200:
+    if len(car_array) != 0 and run <= 600:
         for c in car_array:
             c.score -= 1
             c.sense()
