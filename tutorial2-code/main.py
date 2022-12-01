@@ -47,8 +47,8 @@ INPUT_LAYER_SHAPE = (5, 1)
 WI_SHAPE = (4, 5)
 BI_SHAPE = (1, 4)
 
-W1_SHAPE = (3, 4)
-B1_SHAPE = (1, 3)
+W1_SHAPE = (4, 4)
+B1_SHAPE = (1, 4)
 
 
 class AbstractCar:
@@ -203,6 +203,8 @@ class AbstractCar:
         output_layer = relu(weighted_sum_layer_1)
 
         decided_action = np.argmax(output_layer)
+        
+        print(decided_action)
 
         if decided_action == 0:
             self.rotate(left=True)
@@ -214,6 +216,9 @@ class AbstractCar:
 
         elif decided_action == 2:
             self.move_forward()
+
+        elif decided_action == 3:
+            self.move_backward()
 
     def update_score(self, score):
         self.score += score
@@ -260,19 +265,17 @@ images = [(GRASS, (0, 0)), (TRACK, (0, 0)),
           (FINISH, FINISH_POSITION), (TRACK_BORDER, (0, 0))]
 
 
-def evolve_2_nn(nn1, nn2):
-    learning_rate = 0.01
+def evolve_2_nn(nn1, nn2, ratio):
     mutation_rate = 0.1
-    need_to_mutate = []
     nnn = np.zeros((len(nn1), len(nn1[0])))
     for y in range(len(nn1[0])):
         for x in range(len(nn1)):
-            if np.random.random() <= mutation_rate:
-                need_to_mutate.append((x, y))
-            else:
-                nnn[x][y] = nn1[x][y] + learning_rate * (nn2[x][y] - nn1[x][y])
+            nnn[x][y] = ratio*nn1[x][y] + (1-ratio) * (nn2[x][y]) + np.random.uniform(-mutation_rate, mutation_rate)
+            if not -1 <= nnn[x][y] <= 1:
+                nnn[x][y] = min(nnn[x][y], 1)
+                nnn[x][y] = max(nnn[x][y], -1)
 
-    return need_to_mutate, nnn
+    return nnn
 
 
 def create_next_generation(_car_scores_and_values):
@@ -300,47 +303,28 @@ def create_next_generation(_car_scores_and_values):
         elif score >= second_score:
             second_score = score
             second_values = values
+
     if top_score <= 0:
         top_score = 1
         second_score = 1
     elif second_score <= 0:
         second_score = 1
+
     twi, tbi, tw1, tb1 = top_values
     swi, sbi, sw1, sb1 = second_values
 
     _car_array.append(PlayerCar(20, 15, twi, tbi, tw1, tb1))
     _car_array.append(PlayerCar(20, 15, swi, sbi, sw1, sb1))
 
-    need_to_mutate_wi, nwi = evolve_2_nn(twi, swi)
-    need_to_mutate_w1, nw1 = evolve_2_nn(tw1, sw1)
-
-    need_to_mutate_bi, nbi = evolve_2_nn(tbi, sbi)
-
-    need_to_mutate_b1, nb1 = evolve_2_nn(tb1, sb1)
+    ratio = top_score / top_score + second_score
 
     for r in range(1, 10):
-        for coordinates in need_to_mutate_wi:
-            x, y = coordinates
-            mutation = np.random.uniform(-1, 1)
-            nwi[x][y] = mutation
-        for coordinates in need_to_mutate_w1:
-            x, y = coordinates
-            mutation = np.random.uniform(-1, 1)
-            nw1[x][y] = mutation
-        for coordinates in need_to_mutate_bi:
-            x, y = coordinates
-
-            mutation = np.random.uniform(-1, 1)
-            nbi[0][y] = mutation
-        for coordinates in need_to_mutate_b1:
-            x, y = coordinates
-            mutation = np.random.uniform(-1, 1)
-            print(mutation, "mutiation")
-            nb1[0][y] = mutation
+        nwi = evolve_2_nn(twi, swi, ratio)
+        nbi = evolve_2_nn(tbi, sbi, ratio)
+        nw1 = evolve_2_nn(tw1, sw1, ratio)
+        nb1 = evolve_2_nn(tb1, sb1, ratio)
         _car_array.append(PlayerCar(55, 10, nwi, nbi, nw1, nb1))
-        # if r == 1:
-        #     print("i created this loser:", nwi)
-
+    _car_array.append(PlayerCar(55, 10, twi, tbi, tw1, tb1))
     return _car_array
 
 
