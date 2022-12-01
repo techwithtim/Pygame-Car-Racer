@@ -2,6 +2,7 @@ import numpy
 import pygame
 import numpy as np
 import math
+import pandas as pd
 from utils import scale_image, blit_rotate_center, draw_sensors
 
 GRASS = scale_image(pygame.image.load("imgs/grass.jpg"), 2.5)
@@ -110,6 +111,13 @@ class AbstractCar:
         self.y -= vertical
         self.x -= horizontal
 
+    def save_model(self):
+        with open('model.csv', 'a') as csvfile:
+            np.savetxt(csvfile, self.weights_input_layer, delimiter=',', header="Input Layer Weights")
+            np.savetxt(csvfile, self.bias_input_layer, delimiter=',', header='Input Layer Bias')
+            np.savetxt(csvfile, self.weights_l1, delimiter=',', header='Layer 1 Weights')
+            np.savetxt(csvfile, self.bias_l1, delimiter=',', header='Layer 1 Weights')
+
     def print_model(self):
         print("Wi:", self.weights_input_layer)
         print("Bi:", self.bias_input_layer)
@@ -203,8 +211,6 @@ class AbstractCar:
         output_layer = relu(weighted_sum_layer_1)
 
         decided_action = np.argmax(output_layer)
-        
-        print(decided_action)
 
         if decided_action == 0:
             self.rotate(left=True)
@@ -337,16 +343,18 @@ runs = 0
 car_scores_and_values = []
 generations = 0
 
-while run:
+copy_of_car_array = []
 
+while run:
     clock.tick(FPS)
     pygame.display.update()
     draw(WIN, car_array)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-            for _car in car_array:
+            for _car in copy_of_car_array:
                 _car.print_model()
+                _car.save_model()
             break
         elif event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
@@ -386,6 +394,7 @@ while run:
             _c.reset()
 
         car_array = create_next_generation(car_scores_and_values)
+        copy_of_car_array = car_array.copy()
         runs = 0
         generations += 1
 print(generations)
