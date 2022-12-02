@@ -116,7 +116,7 @@ class AbstractCar:
             np.savetxt(csvfile, self.weights_input_layer, delimiter=',', header="Input Layer Weights")
             np.savetxt(csvfile, self.bias_input_layer, delimiter=',', header='Input Layer Bias')
             np.savetxt(csvfile, self.weights_l1, delimiter=',', header='Layer 1 Weights')
-            np.savetxt(csvfile, self.bias_l1, delimiter=',', header='Layer 1 Weights')
+            np.savetxt(csvfile, self.bias_l1, delimiter=',', header='Layer 1 Bias')
 
     def print_model(self):
         print("Wi:", self.weights_input_layer)
@@ -252,11 +252,11 @@ def draw(win, player_cars):
         pygame.draw.line(WIN, (0, 255, 255), *bonus_line)
     i = 1
     for track_line in TRACK_LINES:
-        i+=1
+        i += 1
         pygame.draw.line(WIN, (max(0,255-i*10), 200, min(255, i * 10)), *track_line)
 
-    for _car in player_cars:
-        _car.draw(win)
+    for __car in player_cars:
+        __car.draw(win)
     pygame.display.update()
 
 
@@ -271,12 +271,20 @@ images = [(GRASS, (0, 0)), (TRACK, (0, 0)),
           (FINISH, FINISH_POSITION), (TRACK_BORDER, (0, 0))]
 
 
-def evolve_2_nn(nn1, nn2, ratio):
-    mutation_rate = 0.1
+def evolve_2_nn(nn1, nn2, ratio, _last_ratio):
+    if ratio == 0:
+        nnn = (2 * np.random.rand(len(nn1), len(nn1[0])) - 1)
+        return nnn
+    if _last_ratio == ratio:
+        print("REPETITION")
+        mutation_rate = 0.3
+    else:
+        mutation_rate = 0.1
     nnn = np.zeros((len(nn1), len(nn1[0])))
     for y in range(len(nn1[0])):
         for x in range(len(nn1)):
-            nnn[x][y] = ratio*nn1[x][y] + (1-ratio) * (nn2[x][y]) + np.random.uniform(-mutation_rate, mutation_rate)
+            mutation = np.random.uniform(-mutation_rate, mutation_rate)
+            nnn[x][y] = ratio*nn1[x][y] + (1-ratio) * (nn2[x][y]) + mutation
             if not -1 <= nnn[x][y] <= 1:
                 nnn[x][y] = min(nnn[x][y], 1)
                 nnn[x][y] = max(nnn[x][y], -1)
@@ -284,7 +292,7 @@ def evolve_2_nn(nn1, nn2, ratio):
     return nnn
 
 
-def create_next_generation(_car_scores_and_values):
+def create_next_generation(_car_scores_and_values, last_ratio):
     _car_array = []
     if len(_car_scores_and_values) <= 1:
         return None
@@ -311,10 +319,11 @@ def create_next_generation(_car_scores_and_values):
             second_values = values
 
     if top_score <= 0:
-        top_score = 1
-        second_score = 1
+        ratio = 0
     elif second_score <= 0:
-        second_score = 1
+        ratio = 1
+    else:
+        ratio = top_score / (top_score + second_score)
 
     twi, tbi, tw1, tb1 = top_values
     swi, sbi, sw1, sb1 = second_values
@@ -322,16 +331,15 @@ def create_next_generation(_car_scores_and_values):
     _car_array.append(PlayerCar(20, 15, twi, tbi, tw1, tb1))
     _car_array.append(PlayerCar(20, 15, swi, sbi, sw1, sb1))
 
-    ratio = top_score / top_score + second_score
-
     for r in range(1, 10):
-        nwi = evolve_2_nn(twi, swi, ratio)
-        nbi = evolve_2_nn(tbi, sbi, ratio)
-        nw1 = evolve_2_nn(tw1, sw1, ratio)
-        nb1 = evolve_2_nn(tb1, sb1, ratio)
-        _car_array.append(PlayerCar(55, 10, nwi, nbi, nw1, nb1))
-    _car_array.append(PlayerCar(55, 10, twi, tbi, tw1, tb1))
-    return _car_array
+        nwi = evolve_2_nn(twi, swi, ratio, last_ratio)
+        nbi = evolve_2_nn(tbi, sbi, ratio, last_ratio)
+        nw1 = evolve_2_nn(tw1, sw1, ratio, last_ratio)
+        nb1 = evolve_2_nn(tb1, sb1, ratio, last_ratio)
+        _car_array.append(PlayerCar(20, 15, nwi, nbi, nw1, nb1))
+    _car_array.append(PlayerCar(20, 15, twi, tbi, tw1, tb1))
+    last_ratio = ratio
+    return _car_array, last_ratio
 
 
 car_array = []
@@ -345,6 +353,10 @@ generations = 0
 
 copy_of_car_array = []
 
+best_of_all_generation = (0, [])
+last_ratio = 0
+num_of_bonus_lines_hit = 1
+
 while run:
     clock.tick(FPS)
     pygame.display.update()
@@ -352,15 +364,16 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-            for _car in copy_of_car_array:
-                _car.print_model()
-                _car.save_model()
+            _car = copy_of_car_array[0]
+            _car.print_model()
+            _car.save_model()
             break
         elif event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
             pygame.draw.circle(WIN, (0, 255, 0), pos, 2)
             print(pos)
-    if len(car_array) != 0 and (runs <= generations + 200):
+    if len(car_array) != 0 and runs <= 200 + 20 * num_of_bonus_lines_hit <= 500:
+        print(runs)
         runs += 1
         for c in car_array:
             c.score -= 1
@@ -384,16 +397,21 @@ while run:
                         c.index_of_bonus_line = -1
                     c.score += 1000
                     c.index_of_bonus_line += 1
-                    # print("Bonus!")
+                    if c.index_of_bonus_line > num_of_bonus_lines_hit:
+                        num_of_bonus_lines_hit = c.index_of_bonus_line
                     c.next_bonus_line = BONUS_LINES[c.index_of_bonus_line]
 
     else:
+        if not runs <= 200 + num_of_bonus_lines_hit * 50:
+            print("THEY DIED OF OLD AGE ;-;")
+        elif len(car_array) == 0:
+            print("They all CRUSHED TO DEATHH!!")
+
         for _c in car_array:
-            print("RESET")
             car_scores_and_values.append((_c.score, (_c.weights_input_layer, _c.bias_input_layer, _c.weights_l1, _c.bias_l1)))
             _c.reset()
 
-        car_array = create_next_generation(car_scores_and_values)
+        car_array, last_ratio = create_next_generation(car_scores_and_values, last_ratio)
         copy_of_car_array = car_array.copy()
         runs = 0
         generations += 1
