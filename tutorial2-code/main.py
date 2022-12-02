@@ -43,9 +43,9 @@ pygame.display.set_caption("Racing Game!")
 
 FPS = 60
 
-INPUT_LAYER_SHAPE = (5, 1)
+INPUT_LAYER_SHAPE = (6, 1)
 
-WI_SHAPE = (4, 5)
+WI_SHAPE = (4, 6)
 BI_SHAPE = (1, 4)
 
 W1_SHAPE = (4, 4)
@@ -53,11 +53,11 @@ B1_SHAPE = (1, 4)
 
 
 class AbstractCar:
-    def __init__(self, max_vel, rotation_vel, wi=None, bi=None, w1=None, b1=None):
+    def __init__(self, _max_vel, _rotation_vel, _wi=None, _bi=None, _w1=None, _b1=None):
         self.img = self.IMG
-        self.max_vel = max_vel
+        self.max_vel = _max_vel
         self.vel = 0
-        self.rotation_vel = rotation_vel
+        self.rotation_vel = _rotation_vel
         self.angle = 0
         self.x, self.y = self.START_POS
         self.acceleration = 0.1
@@ -67,33 +67,33 @@ class AbstractCar:
         self.sensors = []
         self.input_layer = numpy.zeros(INPUT_LAYER_SHAPE)
         self.points_sensor = []
-        if wi is not None:
-            self.weights_input_layer = wi
+        if _wi is not None:
+            self.weights_input_layer = _wi
         else:
             self.weights_input_layer = (2 * np.random.rand(*WI_SHAPE) - 1)
 
-        if bi is not None:
-            self.bias_input_layer = bi
+        if _bi is not None:
+            self.bias_input_layer = _bi
         else:
             self.bias_input_layer = (2 * np.random.rand(*BI_SHAPE) - 1)
-        if w1 is not None:
-            self.weights_l1 = w1
+        if _w1 is not None:
+            self.weights_l1 = _w1
         else:
             self.weights_l1 = (2 * np.random.rand(*W1_SHAPE) - 1)
-        if b1 is not None:
-            self.bias_l1 = b1
+        if _b1 is not None:
+            self.bias_l1 = _b1
         else:
             self.bias_l1 = (2 * np.random.rand(*B1_SHAPE) - 1)
 
-    def rotate(self, left=False, right=False):
-        if left:
+    def rotate(self, _left=False, _right=False):
+        if _left:
             self.angle += self.rotation_vel
-        elif right:
+        elif _right:
             self.angle -= self.rotation_vel
 
-    def draw(self, win):
-        blit_rotate_center(win, self.img, (self.x, self.y), self.angle)
-        self.sensors = draw_sensors(win, self.img, (self.x, self.y), self.angle)
+    def draw(self, _win):
+        blit_rotate_center(_win, self.img, (self.x, self.y), self.angle)
+        self.sensors = draw_sensors(_win, self.img, (self.x, self.y), self.angle)
 
     def move_forward(self):
         self.vel = min(self.vel + self.acceleration, self.max_vel)
@@ -213,11 +213,11 @@ class AbstractCar:
         decided_action = np.argmax(output_layer)
 
         if decided_action == 0:
-            self.rotate(left=True)
+            self.rotate(_left=True)
             # self.move_forward()
 
         elif decided_action == 1:
-            self.rotate(right=True)
+            self.rotate(_right=True)
             # self.move_forward()
 
         elif decided_action == 2:
@@ -226,8 +226,8 @@ class AbstractCar:
         elif decided_action == 3:
             self.move_backward()
 
-    def update_score(self, score):
-        self.score += score
+    def update_score(self, _score):
+        self.score += _score
 
 
 class PlayerCar(AbstractCar):
@@ -246,22 +246,22 @@ class PlayerCar(AbstractCar):
         self.score -= 500
 
 
-def draw(win, player_cars):
-    win.fill("black")
+def draw(_win, _player_cars):
+    _win.fill("black")
     for bonus_line in BONUS_LINES:
         pygame.draw.line(WIN, (0, 255, 255), *bonus_line)
     i = 1
     for track_line in TRACK_LINES:
         i += 1
-        pygame.draw.line(WIN, (max(0,255-i*10), 200, min(255, i * 10)), *track_line)
+        pygame.draw.line(WIN, (max(0, 255-i*10), 200, min(255, i * 10)), *track_line)
 
-    for __car in player_cars:
-        __car.draw(win)
+    for __car in _player_cars:
+        __car.draw(_win)
     pygame.display.update()
 
 
-def relu(w):
-    return np.maximum(0, w)
+def relu(_w):
+    return np.maximum(0, _w)
 
 
 run = True
@@ -271,20 +271,21 @@ images = [(GRASS, (0, 0)), (TRACK, (0, 0)),
           (FINISH, FINISH_POSITION), (TRACK_BORDER, (0, 0))]
 
 
-def evolve_2_nn(nn1, nn2, ratio, _last_ratio):
-    if ratio == 0:
-        nnn = (2 * np.random.rand(len(nn1), len(nn1[0])) - 1)
+def evolve_2_nn(_nn1, _nn2, _ratio, _last_ratio):
+    if _ratio == 0:
+        nnn = (2 * np.random.rand(len(_nn1), len(_nn1[0])) - 1)
         return nnn
-    if _last_ratio == ratio:
-        print("REPETITION")
-        mutation_rate = 0.3
-    else:
-        mutation_rate = 0.1
-    nnn = np.zeros((len(nn1), len(nn1[0])))
-    for y in range(len(nn1[0])):
-        for x in range(len(nn1)):
-            mutation = np.random.uniform(-mutation_rate, mutation_rate)
-            nnn[x][y] = ratio*nn1[x][y] + (1-ratio) * (nn2[x][y]) + mutation
+    # if _last_ratio == _ratio and False:
+    #     print("REPETITION")
+    #     # mutation_rate = 0.3
+    # else:
+    mutation_rate = 0.1
+
+    nnn = np.zeros((len(_nn1), len(_nn1[0])))
+    for y in range(len(_nn1[0])):
+        for x in range(len(_nn1)):
+            mutation = np.random.uniform((-1)*mutation_rate, mutation_rate)
+            nnn[x][y] = _ratio*_nn1[x][y] + (1-_ratio) * (_nn2[x][y]) + mutation
             if not -1 <= nnn[x][y] <= 1:
                 nnn[x][y] = min(nnn[x][y], 1)
                 nnn[x][y] = max(nnn[x][y], -1)
@@ -292,7 +293,7 @@ def evolve_2_nn(nn1, nn2, ratio, _last_ratio):
     return nnn
 
 
-def create_next_generation(_car_scores_and_values, last_ratio):
+def create_next_generation(_car_scores_and_values, _last_ratio):
     _car_array = []
     if len(_car_scores_and_values) <= 1:
         return None
@@ -332,14 +333,14 @@ def create_next_generation(_car_scores_and_values, last_ratio):
     _car_array.append(PlayerCar(20, 15, swi, sbi, sw1, sb1))
 
     for r in range(1, 10):
-        nwi = evolve_2_nn(twi, swi, ratio, last_ratio)
-        nbi = evolve_2_nn(tbi, sbi, ratio, last_ratio)
-        nw1 = evolve_2_nn(tw1, sw1, ratio, last_ratio)
-        nb1 = evolve_2_nn(tb1, sb1, ratio, last_ratio)
+        nwi = evolve_2_nn(twi, swi, ratio, _last_ratio)
+        nbi = evolve_2_nn(tbi, sbi, ratio, _last_ratio)
+        nw1 = evolve_2_nn(tw1, sw1, ratio, _last_ratio)
+        nb1 = evolve_2_nn(tb1, sb1, ratio, _last_ratio)
         _car_array.append(PlayerCar(20, 15, nwi, nbi, nw1, nb1))
     _car_array.append(PlayerCar(20, 15, twi, tbi, tw1, tb1))
-    last_ratio = ratio
-    return _car_array, last_ratio
+    _last_ratio = ratio
+    return _car_array, _last_ratio
 
 
 car_array = []
@@ -372,12 +373,12 @@ while run:
             pos = pygame.mouse.get_pos()
             pygame.draw.circle(WIN, (0, 255, 0), pos, 2)
             print(pos)
-    if len(car_array) != 0 and runs <= 200 + 20 * num_of_bonus_lines_hit <= 500:
-        print(runs)
+    if len(car_array) != 0 and runs <= 200 + 20 * num_of_bonus_lines_hit:
         runs += 1
         for c in car_array:
             c.score -= 1
             c.sense()
+            c.input_layer = np.append(c.input_layer, np.array(c.vel))
             c.take_action()
             for point in c.points_sensor:
                 if point is not None:
@@ -402,6 +403,7 @@ while run:
                     c.next_bonus_line = BONUS_LINES[c.index_of_bonus_line]
 
     else:
+
         if not runs <= 200 + num_of_bonus_lines_hit * 50:
             print("THEY DIED OF OLD AGE ;-;")
         elif len(car_array) == 0:

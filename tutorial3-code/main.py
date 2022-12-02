@@ -155,9 +155,9 @@ def move_player(player_car):
     moved = False
 
     if keys[pygame.K_a]:
-        player_car.rotate(left=True)
+        player_car.rotate(_left=True)
     if keys[pygame.K_d]:
-        player_car.rotate(right=True)
+        player_car.rotate(_right=True)
     if keys[pygame.K_w]:
         moved = True
         player_car.move_forward()
