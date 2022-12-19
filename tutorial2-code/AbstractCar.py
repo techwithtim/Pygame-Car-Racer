@@ -4,42 +4,7 @@ import numpy as np
 import math
 import pandas as pd
 from utils import *
-
-
-TRACK_LINES = [((35, 130), (35, 650)), ((35, 650), (160, 770)), ((160, 770), (670, 770)), ((670, 770), (760, 640)),
-               ((760, 640), (760, 110)), ((760, 110), (760, 20)), ((760, 20), (370, 20)), ((170, 200), (170, 600)),
-               ((170, 600), (240, 660)), ((240, 660), (580, 670)), ((580, 670), (660, 590)), ((660, 590), (660, 190)),
-               ((35, 130), (35, 20)), ((35, 20), (300, 20)), ((300, 20), (300, 110)), ((300, 110), (300, 510)),
-               ((370, 20), (370, 90)), ((370, 90), (370, 240)), ((370, 240), (420, 240)), ((420, 240), (500, 240)),
-               ((660, 190), (660, 130)), ((660, 130), (500, 130)), ((500, 240), (560, 240)), ((560, 240), (560, 510)),
-               ((560, 510), (500, 560)), ((500, 560), (330, 560)), ((330, 560), (300, 510))]
-
-BONUS_LINES = [((173, 216), (296, 219)), ((171, 201), (299, 112)), ((170, 200), (175, 20)), ((39, 131), (168, 202)),
-               ((40, 250), (167, 250)), ((167, 326), (38, 321)), ((37, 427), (165, 427)), ((167, 558), (37, 559)),
-               ((190, 621), (100, 708)), ((249, 662), (252, 769)), ((344, 666), (347, 764)), ((420, 667), (434, 764)),
-               ((535, 673), (548, 767)), ((582, 672), (671, 768)), ((627, 626), (717, 692)), ((660, 590), (760, 641)),
-               ((662, 502), (762, 501)), ((662, 402), (754, 405)), ((660, 313), (763, 306)), ((661, 224), (759, 218)),
-               ((662, 189), (758, 106)), ((760, 20), (660, 130)), ((621, 130), (669, 25)), ((588, 22), (583, 126)),
-               ((498, 129), (488, 25)), ((374, 91), (501, 132)), ((420, 242), (498, 133)), ((510, 260), (660, 130)),
-               ((561, 304), (657, 286)), ((566, 369), (660, 366)), ((561, 439), (658, 444)), ((563, 510), (658, 523)),
-               ((534, 541), (620, 623)), ((464, 567), (465, 660)), ((354, 564), (356, 659)), ((316, 545), (212, 627)),
-               ((174, 503), (297, 496)), ((294, 414), (170, 405))]
-
-RED_CAR = scale_image(pygame.image.load("imgs/red-car.png"), 0.45)
-
-WIN = pygame.display.set_mode((810, 810))
-
-pygame.display.set_caption("Racing Game!")
-
-FPS = 60
-
-INPUT_LAYER_SHAPE = (6, 1)
-
-WI_SHAPE = (4, 6)
-BI_SHAPE = (1, 4)
-
-W1_SHAPE = (4, 4)
-B1_SHAPE = (1, 4)
+import settings
 
 
 class AbstractCar:
@@ -48,33 +13,33 @@ class AbstractCar:
         self.max_vel = _max_vel
         self.vel = 0
         self.rotation_vel = _rotation_vel
-        self.angle = 0
+        self.angle = 90
         self.x, self.y = self.START_POS
         self.acceleration = 0.1
         self.score = 0
         self.index_of_bonus_line = 0
-        self.next_bonus_line = BONUS_LINES[self.index_of_bonus_line]
+        self.next_bonus_line = settings.BONUS_LINES[self.index_of_bonus_line]
         self.sensors = []
-        self.input_layer = numpy.zeros(INPUT_LAYER_SHAPE)
+        self.input_layer = numpy.zeros(settings.INPUT_LAYER_SHAPE)
         self.points_sensor = []
         self.rotation_side = 0  # 0 is right 1 is left
         if _wi is not None:
             self.weights_input_layer = _wi
         else:
-            self.weights_input_layer = (2 * np.random.rand(*WI_SHAPE) - 1)
+            self.weights_input_layer = (2 * np.random.rand(*settings.WI_SHAPE) - 1)
 
         if _bi is not None:
             self.bias_input_layer = _bi
         else:
-            self.bias_input_layer = (2 * np.random.rand(*BI_SHAPE) - 1)
+            self.bias_input_layer = (2 * np.random.rand(*settings.BI_SHAPE) - 1)
         if _w1 is not None:
             self.weights_l1 = _w1
         else:
-            self.weights_l1 = (2 * np.random.rand(*W1_SHAPE) - 1)
+            self.weights_l1 = (2 * np.random.rand(*settings.W1_SHAPE) - 1)
         if _b1 is not None:
             self.bias_l1 = _b1
         else:
-            self.bias_l1 = (2 * np.random.rand(*B1_SHAPE) - 1)
+            self.bias_l1 = (2 * np.random.rand(*settings.B1_SHAPE) - 1)
 
     def rotate(self, _left=False, _right=False):
         if _left:
@@ -91,7 +56,7 @@ class AbstractCar:
         self.move()
 
     def move_backward(self):
-        self.vel = max(self.vel - self.acceleration, -self.max_vel)
+        self.vel = max(self.vel - self.acceleration, -1 * self.max_vel)
         self.move()
 
     def move(self):
@@ -117,7 +82,7 @@ class AbstractCar:
 
     def collide(self):
         car_rect = self.img.get_rect(x=self.x, y=self.y)
-        for line in TRACK_LINES:
+        for line in settings.TRACK_LINES:
             if car_rect.clipline(line):
                 return True
         return False
@@ -129,7 +94,7 @@ class AbstractCar:
         for sensor in self.sensors:
             sensed_point = None
             shortest_point = None
-            for track_line in TRACK_LINES:
+            for track_line in settings.TRACK_LINES:
 
                 (x1, y1), (x2, y2) = track_line
                 (x3, y3), (x4, y4) = sensor
@@ -189,7 +154,7 @@ class AbstractCar:
         self.angle = 0
         self.vel = 0
         self.index_of_bonus_line = 0
-        self.next_bonus_line = BONUS_LINES[0]
+        self.next_bonus_line = settings.BONUS_LINES[0]
         self.score = 0
 
     def take_action(self):
@@ -201,17 +166,14 @@ class AbstractCar:
         # output_layer = relu(weighted_sum_layer_1)
 
         decided_action = np.argmax(output_layer)
-
         if decided_action == 0:
-            self.rotate(_left=True)
-            # self.move_forward()
+            self.move_forward()
 
         elif decided_action == 1:
             self.rotate(_right=True)
-            # self.move_forward()
 
         elif decided_action == 2:
-            self.move_forward()
+            self.rotate(_left=True)
 
         elif decided_action == 3:
             self.move_backward()
@@ -221,8 +183,9 @@ class AbstractCar:
 
 
 class PlayerCar(AbstractCar):
-    IMG = RED_CAR
-    START_POS = (237, 311)
+
+    IMG = settings.RED_CAR
+    START_POS = (544, 78)
 
     def reduce_speed(self):
         self.vel = max(self.vel - self.acceleration / 2, 0)

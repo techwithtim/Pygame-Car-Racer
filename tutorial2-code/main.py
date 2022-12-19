@@ -1,3 +1,4 @@
+import settings
 import numpy
 import pygame
 import numpy as np
@@ -6,50 +7,15 @@ import pandas as pd
 from utils import *
 from AbstractCar import *
 
-TRACK_LINES = [((35, 130), (35, 650)), ((35, 650), (160, 770)), ((160, 770), (670, 770)), ((670, 770), (760, 640)),
-               ((760, 640), (760, 110)), ((760, 110), (760, 20)), ((760, 20), (370, 20)), ((170, 200), (170, 600)),
-               ((170, 600), (240, 660)), ((240, 660), (580, 670)), ((580, 670), (660, 590)), ((660, 590), (660, 190)),
-               ((35, 130), (35, 20)), ((35, 20), (300, 20)), ((300, 20), (300, 110)), ((300, 110), (300, 510)),
-               ((370, 20), (370, 90)), ((370, 90), (370, 240)), ((370, 240), (420, 240)), ((420, 240), (500, 240)),
-               ((660, 190), (660, 130)), ((660, 130), (500, 130)), ((500, 240), (560, 240)), ((560, 240), (560, 510)),
-               ((560, 510), (500, 560)), ((500, 560), (330, 560)), ((330, 560), (300, 510))]
-
-BONUS_LINES = [((173, 216), (296, 219)), ((171, 201), (299, 112)), ((170, 200), (175, 20)), ((39, 131), (168, 202)),
-               ((40, 250), (167, 250)), ((167, 326), (38, 321)), ((37, 427), (165, 427)), ((167, 558), (37, 559)),
-               ((190, 621), (100, 708)), ((249, 662), (252, 769)), ((344, 666), (347, 764)), ((420, 667), (434, 764)),
-               ((535, 673), (548, 767)), ((582, 672), (671, 768)), ((627, 626), (717, 692)), ((660, 590), (760, 641)),
-               ((662, 502), (762, 501)), ((662, 402), (754, 405)), ((660, 313), (763, 306)), ((661, 224), (759, 218)),
-               ((662, 189), (758, 106)), ((760, 20), (660, 130)), ((621, 130), (669, 25)), ((588, 22), (583, 126)),
-               ((498, 129), (488, 25)), ((374, 91), (501, 132)), ((420, 242), (498, 133)), ((510, 260), (660, 130)),
-               ((561, 304), (657, 286)), ((566, 369), (660, 366)), ((561, 439), (658, 444)), ((563, 510), (658, 523)),
-               ((534, 541), (620, 623)), ((464, 567), (465, 660)), ((354, 564), (356, 659)), ((316, 545), (212, 627)),
-               ((174, 503), (297, 496)), ((294, 414), (170, 405))]
-
-RED_CAR = scale_image(pygame.image.load("imgs/red-car.png"), 0.45)
-
-WIN = pygame.display.set_mode((810, 810))
-
-pygame.display.set_caption("Racing Game!")
-
-FPS = 60
-
-INPUT_LAYER_SHAPE = (6, 1)
-
-WI_SHAPE = (4, 6)
-BI_SHAPE = (1, 4)
-
-W1_SHAPE = (4, 4)
-B1_SHAPE = (1, 4)
-
 
 def draw(_win, _player_cars):
     _win.fill("black")
-    for bonus_line in BONUS_LINES:
-        pygame.draw.line(WIN, (0, 255, 255), *bonus_line)
+    for bonus_line in settings.BONUS_LINES:
+        pygame.draw.line(settings.WIN, (0, 255, 255), *bonus_line)
     i = 1
-    for track_line in TRACK_LINES:
+    for track_line in settings.TRACK_LINES:
         i += 1
-        pygame.draw.line(WIN, (max(0, 255-i*10), 200, min(255, i * 10)), *track_line)
+        pygame.draw.line(settings.WIN, (max(0, 255-i*10), 200, min(255, i * 10)), *track_line)
 
     for __car in _player_cars:
         __car.draw(_win)
@@ -131,9 +97,9 @@ last_ratio = 0
 num_of_bonus_lines_hit = 1
 
 while run:
-    clock.tick(FPS)
+    clock.tick(settings.FPS)
     pygame.display.update()
-    draw(WIN, car_array)
+    draw(settings.WIN, car_array)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -143,7 +109,7 @@ while run:
             break
         elif event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
-            pygame.draw.circle(WIN, (0, 255, 0), pos, 2)
+            pygame.draw.circle(settings.WIN, (0, 255, 0), pos, 2)
             print(pos)
     if len(car_array) != 0 and runs <= 200 + 20 * num_of_bonus_lines_hit:
         runs += 1
@@ -154,7 +120,7 @@ while run:
             c.take_action()
             for point in c.points_sensor:
                 if point is not None:
-                    pygame.draw.circle(WIN, *point)
+                    pygame.draw.circle(settings.WIN, *point)
             pygame.display.update()
             if c.collide():
                 c.crash()
@@ -166,13 +132,14 @@ while run:
             else:
                 rect = c.img.get_rect(topleft=(c.x, c.y))
                 if rect.clipline(c.next_bonus_line):
-                    if c.index_of_bonus_line >= len(BONUS_LINES) - 1:
+                    if c.index_of_bonus_line >= len(settings.BONUS_LINES) - 1:
                         c.index_of_bonus_line = -1
+                    # print("BONUS!")
                     c.score += 1000
                     c.index_of_bonus_line += 1
                     if c.index_of_bonus_line > num_of_bonus_lines_hit:
                         num_of_bonus_lines_hit = c.index_of_bonus_line
-                    c.next_bonus_line = BONUS_LINES[c.index_of_bonus_line]
+                    c.next_bonus_line = settings.BONUS_LINES[c.index_of_bonus_line]
 
     else:
 

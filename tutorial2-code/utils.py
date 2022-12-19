@@ -45,12 +45,8 @@ def crossover(_nn1, _nn2, _ratio, _repetitions, bias=False):
     if _ratio == 0:
         nnn = (2 * np.random.rand(len(_nn1), len(_nn1[0])) - 1)
         return nnn
-    # if _last_ratio == _ratio and False:
-    #     print("REPETITION")
-    #     # mutation_rate = 0.3
-    # else:
-    mutation_rate = 0.1
 
+    mutation_rate = 0.1
     nnn = np.zeros((len(_nn1), len(_nn1[0])))
     for y in range(len(_nn1[0])):
         for x in range(len(_nn1)):
