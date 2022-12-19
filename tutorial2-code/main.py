@@ -3,8 +3,8 @@ import pygame
 import numpy as np
 import math
 import pandas as pd
-from utils import scale_image, blit_rotate_center, draw_sensors
-
+from utils import *
+from AbstractCar import *
 
 TRACK_LINES = [((35, 130), (35, 650)), ((35, 650), (160, 770)), ((160, 770), (670, 770)), ((670, 770), (760, 640)),
                ((760, 640), (760, 110)), ((760, 110), (760, 20)), ((760, 20), (370, 20)), ((170, 200), (170, 600)),
@@ -42,199 +42,6 @@ W1_SHAPE = (4, 4)
 B1_SHAPE = (1, 4)
 
 
-class AbstractCar:
-    def __init__(self, _max_vel, _rotation_vel, _wi=None, _bi=None, _w1=None, _b1=None):
-        self.img = self.IMG
-        self.max_vel = _max_vel
-        self.vel = 0
-        self.rotation_vel = _rotation_vel
-        self.angle = 0
-        self.x, self.y = self.START_POS
-        self.acceleration = 0.1
-        self.score = 0
-        self.index_of_bonus_line = 0
-        self.next_bonus_line = BONUS_LINES[self.index_of_bonus_line]
-        self.sensors = []
-        self.input_layer = numpy.zeros(INPUT_LAYER_SHAPE)
-        self.points_sensor = []
-        if _wi is not None:
-            self.weights_input_layer = _wi
-        else:
-            self.weights_input_layer = (2 * np.random.rand(*WI_SHAPE) - 1)
-
-        if _bi is not None:
-            self.bias_input_layer = _bi
-        else:
-            self.bias_input_layer = (2 * np.random.rand(*BI_SHAPE) - 1)
-        if _w1 is not None:
-            self.weights_l1 = _w1
-        else:
-            self.weights_l1 = (2 * np.random.rand(*W1_SHAPE) - 1)
-        if _b1 is not None:
-            self.bias_l1 = _b1
-        else:
-            self.bias_l1 = (2 * np.random.rand(*B1_SHAPE) - 1)
-
-    def rotate(self, _left=False, _right=False):
-        if _left:
-            self.angle += self.rotation_vel
-        elif _right:
-            self.angle -= self.rotation_vel
-
-    def draw(self, _win):
-        blit_rotate_center(_win, self.img, (self.x, self.y), self.angle)
-        self.sensors = draw_sensors(_win, self.img, (self.x, self.y), self.angle)
-
-    def move_forward(self):
-        self.vel = min(self.vel + self.acceleration, self.max_vel)
-        self.move()
-
-    def move_backward(self):
-        self.vel = max(self.vel - self.acceleration, -self.max_vel / 2)
-        self.move()
-
-    def move(self):
-        radians = math.radians(self.angle)
-        vertical = math.cos(radians) * self.vel
-        horizontal = math.sin(radians) * self.vel
-
-        self.y -= vertical
-        self.x -= horizontal
-
-    def save_model(self):
-        with open('model.csv', 'a') as csvfile:
-            np.savetxt(csvfile, self.weights_input_layer, delimiter=',', header="Input Layer Weights")
-            np.savetxt(csvfile, self.bias_input_layer, delimiter=',', header='Input Layer Bias')
-            np.savetxt(csvfile, self.weights_l1, delimiter=',', header='Layer 1 Weights')
-            np.savetxt(csvfile, self.bias_l1, delimiter=',', header='Layer 1 Bias')
-
-    def print_model(self):
-        print("Wi:", self.weights_input_layer)
-        print("Bi:", self.bias_input_layer)
-        print("W1:", self.weights_l1)
-        print("B1:", self.bias_l1)
-
-    def collide(self):
-        car_rect = self.img.get_rect(x=self.x, y=self.y)
-        for line in TRACK_LINES:
-            if car_rect.clipline(line):
-                return True
-        return False
-
-    def sense(self):
-        points = []
-        distances = []
-        self.sensors = [self.sensors[0], self.sensors[1], self.sensors[2], self.sensors[-1], self.sensors[-2]]
-        for sensor in self.sensors:
-            sensed_point = None
-            shortest_point = None
-            for track_line in TRACK_LINES:
-
-                (x1, y1), (x2, y2) = track_line
-                (x3, y3), (x4, y4) = sensor
-                x1 = int(round(x1))
-                x2 = int(round(x2))
-                x3 = int(round(x3))
-                x4 = int(round(x4))
-                y1 = int(round(y1))
-                y2 = int(round(y2))
-                y3 = int(round(y3))
-                y4 = int(round(y4))
-                if (max(x1, x2) < min(x3, x4)) or (min(x1, x2) > max(x3, x4)) \
-                        or (max(y1, y2) < min(y3, y4)) or (min(y1, y2) > max(y3, y4)):
-                    pass
-                else:
-                    if x1 == x2 and x3 == x4:
-                        pass
-
-                    elif x1 == x2:
-
-                        y = int(((y4 - y3) / (x4 - x3)) * (x1 - x3) + y3)
-                        if min(y1, y2) <= y <= max(y1, y2):
-                            dist = math.sqrt((x1 - x3) ** 2 + (y - y3) ** 2)
-                            if shortest_point is None or shortest_point > dist:
-                                shortest_point = dist
-                                sensed_point = ((0, 0, 255), (x1, y), 5)
-                    elif x3 == x4:
-                        y = int(((y2 - y1) / (x2 - x1)) * (x3 - x1) + y1)
-                        if min(y3, y4) <= y <= max(y3, y4):
-                            dist = math.sqrt((x3 - x3) ** 2 + (y3 - y) ** 2)
-                            if shortest_point is None or shortest_point > dist:
-                                shortest_point = dist
-                                sensed_point = ((255, 0, 0), (x3, y), 5)
-                    else:
-                        b1 = ((y2 - y1) / (x2 - x1))
-                        b2 = ((y4 - y3) / (x4 - x3))
-                        if b1 != b2:
-                            x = ((b2 * x3 - b1 * x1 + y1 - y3) / (b2 - b1))
-                            y = (y1 + b1 * (x - x1))
-                            if min(y3, y4) <= y <= max(y3, y4) and min(x3, x4) <= x <= max(x3, x4) \
-                                    and min(x1, x2) <= x <= max(x1, x2):
-                                dist = math.sqrt((x - x3) ** 2 + (y - y3) ** 2)
-                                if shortest_point is None or shortest_point > dist:
-                                    shortest_point = dist
-                                    sensed_point = ((0, 255, 0), (x, y), 5)
-            if sensed_point is not None and shortest_point is not None:
-                points.append(sensed_point)
-                distances.append(shortest_point)
-            else:
-                points.append(None)
-                distances.append(400)
-        self.input_layer = np.array(distances)
-        self.points_sensor = points
-
-    def reset(self):
-        self.x, self.y = self.START_POS
-        self.angle = 0
-        self.vel = 0
-        self.index_of_bonus_line = 0
-        self.next_bonus_line = BONUS_LINES[0]
-        self.score = 0
-
-    def take_action(self):
-        weighted_sum_input_layer = np.dot(self.weights_input_layer, self.input_layer) + self.bias_input_layer
-        input_layer_results = relu(weighted_sum_input_layer)
-        weighted_sum_layer_1 = np.dot(self.weights_l1, input_layer_results.T)
-        weighted_sum_layer_1 += self.bias_l1.T
-
-        output_layer = relu(weighted_sum_layer_1)
-
-        decided_action = np.argmax(output_layer)
-
-        if decided_action == 0:
-            self.rotate(_left=True)
-            # self.move_forward()
-
-        elif decided_action == 1:
-            self.rotate(_right=True)
-            # self.move_forward()
-
-        elif decided_action == 2:
-            self.move_forward()
-
-        elif decided_action == 3:
-            self.move_backward()
-
-    def update_score(self, _score):
-        self.score += _score
-
-
-class PlayerCar(AbstractCar):
-    IMG = RED_CAR
-    START_POS = (237, 311)
-
-    def reduce_speed(self):
-        self.vel = max(self.vel - self.acceleration / 2, 0)
-        self.move()
-
-    def bounce(self):
-        self.vel = -self.vel
-        self.move()
-
-    def crash(self):
-        self.score -= 500
-
-
 def draw(_win, _player_cars):
     _win.fill("black")
     for bonus_line in BONUS_LINES:
@@ -249,38 +56,12 @@ def draw(_win, _player_cars):
     pygame.display.update()
 
 
-def relu(_w):
-    return np.maximum(0, _w)
-
-
 run = True
 
 clock = pygame.time.Clock()
 
 
-def evolve_2_nn(_nn1, _nn2, _ratio, _last_ratio):
-    if _ratio == 0:
-        nnn = (2 * np.random.rand(len(_nn1), len(_nn1[0])) - 1)
-        return nnn
-    # if _last_ratio == _ratio and False:
-    #     print("REPETITION")
-    #     # mutation_rate = 0.3
-    # else:
-    mutation_rate = 0.1
-
-    nnn = np.zeros((len(_nn1), len(_nn1[0])))
-    for y in range(len(_nn1[0])):
-        for x in range(len(_nn1)):
-            mutation = np.random.uniform((-1)*mutation_rate, mutation_rate)
-            nnn[x][y] = _ratio*_nn1[x][y] + (1-_ratio) * (_nn2[x][y]) + mutation
-            if not -1 <= nnn[x][y] <= 1:
-                nnn[x][y] = min(nnn[x][y], 1)
-                nnn[x][y] = max(nnn[x][y], -1)
-
-    return nnn
-
-
-def create_next_generation(_car_scores_and_values, _last_ratio):
+def create_next_generation(_car_scores_and_values):
     _car_array = []
     if len(_car_scores_and_values) <= 1:
         return None
@@ -296,12 +77,15 @@ def create_next_generation(_car_scores_and_values, _last_ratio):
         temp_values = top_values
         top_values = second_values
         second_values = temp_values
-
+    repetitions = 0
     for car in _car_scores_and_values:
         score, values = car
-        if score >= top_score:
+        if score == top_score:
+            repetitions += 1
+        if score > top_score:
             top_score = score
             top_values = values
+            repetitions = 0
         elif score >= second_score:
             second_score = score
             second_values = values
@@ -315,17 +99,18 @@ def create_next_generation(_car_scores_and_values, _last_ratio):
 
     twi, tbi, tw1, tb1 = top_values
     swi, sbi, sw1, sb1 = second_values
-
-    _car_array.append(PlayerCar(20, 15, twi, tbi, tw1, tb1))
-    _car_array.append(PlayerCar(20, 15, swi, sbi, sw1, sb1))
+    max_vel = 12
+    rotation_vel = 5
+    _car_array.append(PlayerCar(max_vel, rotation_vel, twi, tbi, tw1, tb1))
+    _car_array.append(PlayerCar(max_vel, rotation_vel, swi, sbi, sw1, sb1))
 
     for r in range(1, 10):
-        nwi = evolve_2_nn(twi, swi, ratio, _last_ratio)
-        nbi = evolve_2_nn(tbi, sbi, ratio, _last_ratio)
-        nw1 = evolve_2_nn(tw1, sw1, ratio, _last_ratio)
-        nb1 = evolve_2_nn(tb1, sb1, ratio, _last_ratio)
-        _car_array.append(PlayerCar(20, 15, nwi, nbi, nw1, nb1))
-    _car_array.append(PlayerCar(20, 15, twi, tbi, tw1, tb1))
+        nwi = crossover(twi, swi, ratio, repetitions)
+        nbi = crossover(tbi, sbi, ratio, repetitions, bias=True)
+        nw1 = crossover(tw1, sw1, ratio, repetitions)
+        nb1 = crossover(tb1, sb1, ratio, repetitions, bias=True)
+        _car_array.append(PlayerCar(max_vel, rotation_vel, nwi, nbi, nw1, nb1))
+    _car_array.append(PlayerCar(max_vel, rotation_vel, twi, tbi, tw1, tb1))
     _last_ratio = ratio
     return _car_array, _last_ratio
 
@@ -391,7 +176,7 @@ while run:
 
     else:
 
-        if not runs <= 200 + num_of_bonus_lines_hit * 50:
+        if not runs <= 200 + 20 * num_of_bonus_lines_hit:
             print("THEY DIED OF OLD AGE ;-;")
         elif len(car_array) == 0:
             print("They all CRUSHED TO DEATHH!!")
@@ -400,7 +185,7 @@ while run:
             car_scores_and_values.append((_c.score, (_c.weights_input_layer, _c.bias_input_layer, _c.weights_l1, _c.bias_l1)))
             _c.reset()
 
-        car_array, last_ratio = create_next_generation(car_scores_and_values, last_ratio)
+        car_array, last_ratio = create_next_generation(car_scores_and_values)
         copy_of_car_array = car_array.copy()
         runs = 0
         generations += 1
