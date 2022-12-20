@@ -14,7 +14,7 @@ class AbstractCar:
         self.vel = 0
         self.rotation_vel = _rotation_vel
         self.angle = 180
-        self.x, self.y = self.START_POS
+        self.x, self.y = settings.STARTING_POSITION
         self.acceleration = 0.1
         self.score = 0
         self.rounds_completed = 0
@@ -147,26 +147,38 @@ class AbstractCar:
             else:
                 points.append(None)
                 distances.append(400)
-        self.input_layer = np.array(distances)
+
         self.points_sensor = points
+        return distances
+
+    def get_distance_from_next_bonus_line(self):
+        point_a, point_b = self.next_bonus_line
+        point_a_x, point_a_y = point_a
+        point_b_x, point_b_y = point_b
+        dist_from_a = math.hypot(point_a_x - self.x, point_a_y - self.y)
+        dist_from_b = math.hypot(point_b_x - self.x, point_b_y - self.y)
+        return dist_from_a, dist_from_b
+
+    def update_input_layer(self):
+        input_layer = self.sense()
+        input_layer.append(self.vel)
+        distances_from_next_bonus_line = self.get_distance_from_next_bonus_line()
+
+        input_layer+=[*distances_from_next_bonus_line]
+        self.input_layer = input_layer
 
     def reset(self):
-        self.x, self.y = self.START_POS
+        self.x, self.y = settings.STARTING_POSITION
         self.angle = 0
         self.vel = 0
         self.index_of_bonus_line = 0
         self.next_bonus_line = settings.BONUS_LINES[0]
         self.score = 0
 
-    def take_action(self):
-        weighted_sum_input_layer = np.dot(self.weights_input_layer, self.input_layer) + self.bias_input_layer
-        output_layer = relu(weighted_sum_input_layer)
-        # weighted_sum_layer_1 = np.dot(self.weights_l1, input_layer_results.T)
-        # weighted_sum_layer_1 += self.bias_l1.T
-
-        # output_layer = relu(weighted_sum_layer_1)
-
+    def take_action(self, output_layer):
+        print(output_layer, "this is what im working with 0_0")
         decided_action = np.argmax(output_layer)
+        print(decided_action, "Me smart to be")
         if decided_action == 0:
             self.move_forward()
 
@@ -186,7 +198,7 @@ class AbstractCar:
 class PlayerCar(AbstractCar):
 
     IMG = settings.RED_CAR
-    START_POS = (544, 78)
+
 
     def reduce_speed(self):
         self.vel = max(self.vel - self.acceleration * 0.1, 0)

@@ -1,3 +1,7 @@
+import os
+
+import neat.config
+
 import settings
 import numpy
 import pygame
@@ -20,11 +24,6 @@ def draw(_win, _player_cars):
     for __car in _player_cars:
         __car.draw(_win)
     pygame.display.update()
-
-
-run = True
-
-clock = pygame.time.Clock()
 
 
 def create_next_generation(_car_scores_and_values):
@@ -81,81 +80,108 @@ def create_next_generation(_car_scores_and_values):
     return _car_array, _last_ratio
 
 
-car_array = []
+def main(genomes, config):
+    nets = []
+    ge = []
+    cars = []
+    # _car_array.append(PlayerCar(max_vel, rotation_vel, twi, tbi, tw1, tb1))
 
-for j in range(1, 8):
-    temp = PlayerCar(100, 100)
-    car_array.append(temp)
-runs = 0
-car_scores_and_values = []
-generations = 0
+    for _, g in genomes:
+        # print("bazinga")
+        net = neat.nn.FeedForwardNetwork.create(g, config)
+        nets.append(net)
+        cars.append(PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL))
+        g.fitness = 0
+        ge.append(g)
 
-copy_of_car_array = []
+    run = True
 
-best_of_all_generation = (0, [])
-last_ratio = 0
-num_of_bonus_lines_hit = 1
+    clock = pygame.time.Clock()
 
-while run:
-    clock.tick(settings.FPS)
-    pygame.display.update()
-    draw(settings.WIN, car_array)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-            _car = copy_of_car_array[0]
-            _car.print_model()
-            _car.save_model()
+
+
+    runs = 0
+    car_scores_and_values = []
+    generations = 0
+
+    copy_of_car_array = []
+
+    best_of_all_generation = (0, [])
+    last_ratio = 0
+    num_of_bonus_lines_hit = 1
+
+    while run:
+        # print("buya", len(cars))
+        clock.tick(settings.FPS)
+        pygame.display.update()
+        draw(settings.WIN, cars)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                pygame.quit()
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                pygame.draw.circle(settings.WIN, (0, 255, 0), pos, 2)
+                print(pos)
+        if len(cars) != 0:
+            runs += 1
+            for x, car in enumerate(cars):
+                ge[x].fitness += 0.1
+
+                car.update_input_layer()
+                print(car.input_layer, "input_layer")
+                print(len(car.input_layer))
+                output = nets[x].activate(car.input_layer)
+                car.take_action(output)
+                for point in car.points_sensor:
+                    if point is not None:
+                        pygame.draw.circle(settings.WIN, *point)
+                pygame.display.update()
+                if car.collide() or runs >= 200 + 20 * car.index_of_bonus_line +\
+                        car.rounds_completed * len(settings.BONUS_LINES):
+                    print("IVE COLLIDED AND IM A FAGA")
+                    ge[x].fitness -= 100
+
+                    cars.pop(x)
+                    nets.pop(x)
+                    ge.pop(x)
+                    # c.crash()
+                    # car_scores_and_values.append((c.score, (c.weights_input_layer, c.bias_input_layer,
+                    #                                         c.weights_l1, c.bias_l1)))
+                    # c.reset()
+                    # car_array.remove(c)
+
+                else:
+                    rect = car.img.get_rect(topleft=(car.x, car.y))
+                    if rect.clipline(car.next_bonus_line):
+                        if car.index_of_bonus_line >= len(settings.BONUS_LINES) - 1:
+                            car.rounds_completed += 1
+                            car.index_of_bonus_line = -1
+                        # print("BONUS!")
+                        ge[x].fitness += 1000
+                        car.index_of_bonus_line += 1
+                        if car.index_of_bonus_line > num_of_bonus_lines_hit:
+                            num_of_bonus_lines_hit = car.index_of_bonus_line
+                        car.next_bonus_line = settings.BONUS_LINES[car.index_of_bonus_line]
+
+        else:
             break
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            pos = pygame.mouse.get_pos()
-            pygame.draw.circle(settings.WIN, (0, 255, 0), pos, 2)
-            print(pos)
-    if len(car_array) != 0 and runs <= 200 + 20 * num_of_bonus_lines_hit:
-        runs += 1
-        for c in car_array:
-            c.score -= 1
-            c.sense()
-            c.input_layer = np.append(c.input_layer, np.array(c.vel))
-            c.take_action()
-            for point in c.points_sensor:
-                if point is not None:
-                    pygame.draw.circle(settings.WIN, *point)
-            pygame.display.update()
-            if c.collide():
-                c.crash()
-                car_scores_and_values.append((c.score, (c.weights_input_layer, c.bias_input_layer,
-                                                        c.weights_l1, c.bias_l1)))
-                c.reset()
-                car_array.remove(c)
 
-            else:
-                rect = c.img.get_rect(topleft=(c.x, c.y))
-                if rect.clipline(c.next_bonus_line):
-                    if c.index_of_bonus_line >= len(settings.BONUS_LINES) - 1:
-                        c.index_of_bonus_line = -1
-                    # print("BONUS!")
-                    c.score += 1000
-                    c.index_of_bonus_line += 1
-                    if c.index_of_bonus_line > num_of_bonus_lines_hit:
-                        num_of_bonus_lines_hit = c.index_of_bonus_line
-                    c.next_bonus_line = settings.BONUS_LINES[c.index_of_bonus_line]
 
-    else:
+def run(_config_path):
+    config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet
+                                , neat.DefaultStagnation, _config_path)
+    p = neat.Population(config)
 
-        if not runs <= 200 + 20 * num_of_bonus_lines_hit:
-            print("THEY DIED OF OLD AGE ;-;")
-        elif len(car_array) == 0:
-            print("They all CRUSHED TO DEATHH!!")
+    p.add_reporter(neat.StdOutReporter(True))
+    stats = neat.StatisticsReporter()
+    p.add_reporter(stats)
 
-        for _c in car_array:
-            car_scores_and_values.append((_c.score, (_c.weights_input_layer, _c.bias_input_layer, _c.weights_l1, _c.bias_l1)))
-            _c.reset()
+    winner = p.run(main,50)
 
-        car_array, last_ratio = create_next_generation(car_scores_and_values)
-        copy_of_car_array = car_array.copy()
-        runs = 0
-        generations += 1
-print(generations)
 
-pygame.quit()
+if __name__ == "__main__":
+    local_dir = os.path.dirname(__file__)
+    config_path = os.path.join(local_dir, "config-feedforward.txt")
+    run(config_path)
