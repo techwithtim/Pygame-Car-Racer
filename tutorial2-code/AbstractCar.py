@@ -13,10 +13,11 @@ class AbstractCar:
         self.max_vel = _max_vel
         self.vel = 0
         self.rotation_vel = _rotation_vel
-        self.angle = 90
+        self.angle = 180
         self.x, self.y = self.START_POS
         self.acceleration = 0.1
         self.score = 0
+        self.rounds_completed = 0
         self.index_of_bonus_line = 0
         self.next_bonus_line = settings.BONUS_LINES[self.index_of_bonus_line]
         self.sensors = []
@@ -188,7 +189,7 @@ class PlayerCar(AbstractCar):
     START_POS = (544, 78)
 
     def reduce_speed(self):
-        self.vel = max(self.vel - self.acceleration / 2, 0)
+        self.vel = max(self.vel - self.acceleration * 0.1, 0)
         self.move()
 
     def bounce(self):
