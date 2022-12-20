@@ -179,6 +179,7 @@ def run(_config_path):
     p.add_reporter(stats)
 
     winner = p.run(main,50)
+    print(winner, "winner")
 
 
 if __name__ == "__main__":
