@@ -127,7 +127,7 @@ def main(genomes, config):
         if len(cars) != 0:
             runs += 1
             for x, car in enumerate(cars):
-                ge[x].fitness += 0.1
+                ge[x].fitness += 1
 
                 car.update_input_layer()
                 print(car.input_layer, "input_layer")
@@ -138,10 +138,10 @@ def main(genomes, config):
                     if point is not None:
                         pygame.draw.circle(settings.WIN, *point)
                 pygame.display.update()
-                if car.collide() or runs >= 200 + 20 * car.index_of_bonus_line +\
+                if car.collide() or runs >= 40 + 20 * car.index_of_bonus_line +\
                         car.rounds_completed * len(settings.BONUS_LINES):
                     print("IVE COLLIDED AND IM A FAGA")
-                    ge[x].fitness -= 100
+                    ge[x].fitness -= 10000
 
                     cars.pop(x)
                     nets.pop(x)

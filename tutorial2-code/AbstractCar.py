@@ -11,9 +11,9 @@ class AbstractCar:
     def __init__(self, _max_vel, _rotation_vel, _wi=None, _bi=None, _w1=None, _b1=None):
         self.img = self.IMG
         self.max_vel = _max_vel
-        self.vel = 0
+        self.vel = 1
         self.rotation_vel = _rotation_vel
-        self.angle = 180
+        self.angle = 90
         self.x, self.y = settings.STARTING_POSITION
         self.acceleration = 0.1
         self.score = 0
