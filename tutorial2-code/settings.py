@@ -1,9 +1,8 @@
 from utils import *
 
-NUM_OF_MUTATIONS = 10
-MAX_VEL = 50
+MAX_VEL = 12
 ROTATION_VEL = 5
-NUM_OF_RANDOM_CARS_IN_GENERATION = 3
+
 TRACK_LINES = [((35, 130), (35, 650)), ((35, 650), (160, 770)), ((160, 770), (670, 770)), ((670, 770), (760, 640)),
                    ((760, 640), (760, 110)), ((760, 110), (760, 20)), ((760, 20), (370, 20)), ((170, 120), (170, 600)),
                    ((170, 600), (240, 660)), ((240, 660), (580, 670)), ((580, 670), (660, 590)),
@@ -34,11 +33,11 @@ pygame.display.set_caption("Racing Game!")
 
 FPS = 60
 
-INPUT_LAYER_SHAPE = (12, 1)
+INPUT_LAYER_SHAPE = (8, 1)
 
-WI_SHAPE = (6, 12)
-BI_SHAPE = (1, 6)
+WI_SHAPE = (4, 8)
+BI_SHAPE = (1, 4)
 
-W1_SHAPE = (4, 6)
+W1_SHAPE = (4, 4)
 B1_SHAPE = (1, 4)
 

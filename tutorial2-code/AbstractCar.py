@@ -17,9 +17,9 @@ class AbstractCar:
         self.x, self.y = self.START_POS
         self.acceleration = 0.1
         self.score = 0
-        self.rounds_completed = 0
-        self.index_of_next_bonus_line = 0
-        self.next_bonus_line = settings.BONUS_LINES[self.index_of_next_bonus_line]
+        self.rounds_completed=0
+        self.index_of_bonus_line = 0
+        self.next_bonus_line = settings.BONUS_LINES[self.index_of_bonus_line]
         self.sensors = []
         self.input_layer = numpy.zeros(settings.INPUT_LAYER_SHAPE)
         self.points_sensor = []
@@ -152,7 +152,7 @@ class AbstractCar:
         self.x, self.y = self.START_POS
         self.angle = 0
         self.vel = 0
-        self.index_of_next_bonus_line = 0
+        self.index_of_bonus_line = 0
         self.next_bonus_line = settings.BONUS_LINES[0]
         self.score = 0
 
@@ -165,23 +165,19 @@ class AbstractCar:
         return dist_from_a, dist_from_b
 
     def update_input_layer(self):
-
         sensed_distances_from_walls, self.points_sensor = self.sense()
         self.input_layer = np.array(sensed_distances_from_walls)
-        next_bonus_line_point_a, next_bonus_line_point_b = self.next_bonus_line
-        temp = [*next_bonus_line_point_a, *next_bonus_line_point_b]
-        # print(temp)
-        self.input_layer = np.append(self.input_layer, np.array(temp))
-        self.input_layer = np.append(self.input_layer, np.array((self.x, self.y)))
+        distances_from_next_bonus_line = self.get_distance_from_next_bonus_line()
+        self.input_layer = np.append(self.input_layer, np.array(distances_from_next_bonus_line))
+        # self.input_layer = np.append(self)
         self.input_layer = np.append(self.input_layer, np.array(self.vel))
 
     def take_action(self):
         self.update_input_layer()
-        # print(self.input_layer)
         weighted_sum = np.dot(self.weights_input_layer, self.input_layer) + self.bias_input_layer
-        input_layer_results = relu(weighted_sum)
-        weighted_sum = np.dot(self.weights_l1, input_layer_results.T)
-        weighted_sum += self.bias_l1.T
+        # input_layer_results = relu(weighted_sum)
+        # weighted_sum = np.dot(self.weights_l1, input_layer_results.T)
+        # weighted_sum += self.bias_l1.T
 
         output_layer = relu(weighted_sum)
 
