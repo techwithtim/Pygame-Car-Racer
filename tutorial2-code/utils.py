@@ -1,10 +1,11 @@
+import copy
 import math
 import numpy as np
 import pygame
-
+import settings
 
 def relu(_w):
-    return np.maximum(0.1 * _w, _w)
+    return np.maximum(0, _w)
 
 
 def scale_image(img, factor):
@@ -41,23 +42,36 @@ def draw_sensors(win, img, top_left, angle):
     return sensors_coordinates
 
 
-def crossover(_nn1, _nn2, _ratio, _repetitions, bias=False):
-    if _ratio == 0:
-        nnn = (2 * np.random.rand(len(_nn1), len(_nn1[0])) - 1)
-        return nnn
+def crossover(_top_values, _top_scores):
+    values_for_next_generation = []
+    counter = 0
+    num_of_cars = len(_top_scores)
+    first_value = _top_values.pop()
+    for i in range(len(_top_values)):
+        j = 0
+        for net in _top_values[i]:
+            for y in range(len(net[0])):
+                for x in range(len(net)):
+                    first_value[j][x][y] += net[x][y]
 
+            j += 1
     mutation_rate = 0.1
-    nnn = np.zeros((len(_nn1), len(_nn1[0])))
-    for y in range(len(_nn1[0])):
-        for x in range(len(_nn1)):
-            if _repetitions >= 15:
-                print("MUTATION RATE IS 0.6")
-                mutation_rate = 0.6
-            mutation = np.random.uniform((-1)*mutation_rate, mutation_rate)
-            nnn[x][y] = _ratio*_nn1[x][y] + (1-_ratio) * (_nn2[x][y]) + mutation
-            if not -2 <= nnn[x][y] <= 2 and not bias:
-                nnn[x][y] = min(nnn[x][y], 2)
-                nnn[x][y] = max(nnn[x][y], -2)
+    temp = copy.deepcopy(first_value)
+    for i in range(settings.NUM_OF_MUTATIONS):
+        j = 0
+        for net in first_value:
+            for y in range(len(net[0])):
+                for x in range(len(net)):
 
-    return nnn
+                    mutation = np.random.uniform((-1) * mutation_rate, mutation_rate)
+                    net[x][y] = net[x][y] / num_of_cars + mutation
+                    if counter % 2 == 0 and not -2 <= net[x][y] <= 2:  # weight
+                        net[x][y] = min(net[x][y], 2)
+                        net[x][y] = max(net[x][y], -2)
+            j += 1
+            counter += 1
+        values_for_next_generation.append(first_value)
+        first_value = temp
+
+    return values_for_next_generation
 

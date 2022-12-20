@@ -31,55 +31,35 @@ def create_next_generation(_car_scores_and_values):
     _car_array = []
     if len(_car_scores_and_values) <= 1:
         return None
-
+    top_scores_array = []
+    top_values_array = []
     top_score, top_values = _car_scores_and_values.pop(0)
-    second_score, second_values = _car_scores_and_values.pop(0)
 
-    if top_score < second_score:
-        top_score += second_score
-        second_score = top_score - second_score
-        top_score -= second_score
-
-        temp_values = top_values
-        top_values = second_values
-        second_values = temp_values
-    repetitions = 0
     for car in _car_scores_and_values:
         score, values = car
-        if score == top_score:
-            repetitions += 1
         if score > top_score:
             top_score = score
-            top_values = values
-            repetitions = 0
-        elif score >= second_score:
-            second_score = score
-            second_values = values
-
     if top_score <= 0:
-        ratio = 0
-    elif second_score <= 0:
-        ratio = 1
+        pass
     else:
-        ratio = top_score / (top_score + second_score)
+        for car in _car_scores_and_values:
+            score, values = car
+            if score - 100 < top_score:
+                top_score = score
+                top_values_array.append(values)
+                top_scores_array.append(score)
 
-    twi, tbi, tw1, tb1 = top_values
-    swi, sbi, sw1, sb1 = second_values
+    _car_array.append(PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL, *top_values_array[0]))
+    for i in range(settings.NUM_OF_RANDOM_CARS_IN_GENERATION):
+        _car_array.append(PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL))
 
-    _car_array.append(PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL, twi, tbi, tw1, tb1))
-    _car_array.append(PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL, swi, sbi, sw1, sb1))
-    _car_array.append(PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL))
-    _car_array.append(PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL))
+    values_for_next_generation = crossover(top_values_array, top_scores_array)
 
-    for r in range(1, 30):
-        nwi = crossover(twi, swi, ratio, repetitions)
-        nbi = crossover(tbi, sbi, ratio, repetitions, bias=True)
-        nw1 = crossover(tw1, sw1, ratio, repetitions)
-        nb1 = crossover(tb1, sb1, ratio, repetitions, bias=True)
-        _car_array.append(PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL, nwi, nbi, nw1, nb1))
-    _car_array.append(PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL, twi, tbi, tw1, tb1))
-    _last_ratio = ratio
-    return _car_array, _last_ratio
+    for value in values_for_next_generation:
+
+        _car_array.append(PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL, *value))
+
+    return _car_array
 
 
 car_array = []
@@ -121,10 +101,10 @@ while run:
                 if point is not None:
                     pygame.draw.circle(settings.WIN, *point)
             pygame.display.update()
-            if c.collide() or runs >= 120 + 20 * (c.index_of_bonus_line + c.rounds_completed *
+            if c.collide() or runs >= 120 + 20 * (c.index_of_next_bonus_line + c.rounds_completed *
                                                   len(settings.BONUS_LINES)):
-                if runs >= 120 + 20 * (c.index_of_bonus_line + c.rounds_completed *
-                                                  len(settings.BONUS_LINES)):
+                if runs >= 120 + 20 * (c.index_of_next_bonus_line + c.rounds_completed *
+                                       len(settings.BONUS_LINES)):
                     c.crash(500)
                 car_scores_and_values.append((c.score, (c.weights_input_layer, c.bias_input_layer,
                                                         c.weights_l1, c.bias_l1)))
@@ -133,15 +113,16 @@ while run:
             else:
                 rect = c.img.get_rect(topleft=(c.x, c.y))
                 if rect.clipline(c.next_bonus_line):
-                    if c.index_of_bonus_line >= len(settings.BONUS_LINES) - 1:
-                        c.index_of_bonus_line = -1
-                        c.rounds_completed +=1
+                    if c.index_of_next_bonus_line >= len(settings.BONUS_LINES) - 1:
+                        c.index_of_next_bonus_line = -1
+
+                        c.rounds_completed += 1
                     # print("BONUS!")
                     c.score += 1000
-                    c.index_of_bonus_line += 1
-                    if c.index_of_bonus_line > num_of_bonus_lines_hit:
-                        num_of_bonus_lines_hit = c.index_of_bonus_line
-                    c.next_bonus_line = settings.BONUS_LINES[c.index_of_bonus_line]
+                    c.index_of_next_bonus_line += 1
+                    if c.index_of_next_bonus_line > num_of_bonus_lines_hit:
+                        num_of_bonus_lines_hit = c.index_of_next_bonus_line
+                    c.next_bonus_line = settings.BONUS_LINES[c.index_of_next_bonus_line]
 
     else:
 
@@ -154,7 +135,7 @@ while run:
             car_scores_and_values.append((_c.score, (_c.weights_input_layer, _c.bias_input_layer, _c.weights_l1, _c.bias_l1)))
             _c.reset()
 
-        car_array, last_ratio = create_next_generation(car_scores_and_values)
+        car_array = create_next_generation(car_scores_and_values)
         copy_of_car_array = car_array.copy()
         runs = 0
         generations += 1
