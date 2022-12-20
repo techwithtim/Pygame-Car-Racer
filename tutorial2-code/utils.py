@@ -4,7 +4,7 @@ import pygame
 
 
 def relu(_w):
-    return np.maximum(0, _w)
+    return np.maximum(0.1 * _w, _w)
 
 
 def scale_image(img, factor):
@@ -50,7 +50,7 @@ def crossover(_nn1, _nn2, _ratio, _repetitions, bias=False):
     nnn = np.zeros((len(_nn1), len(_nn1[0])))
     for y in range(len(_nn1[0])):
         for x in range(len(_nn1)):
-            if _repetitions >= 5:
+            if _repetitions >= 15:
                 print("MUTATION RATE IS 0.6")
                 mutation_rate = 0.6
             mutation = np.random.uniform((-1)*mutation_rate, mutation_rate)

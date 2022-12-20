@@ -65,18 +65,19 @@ def create_next_generation(_car_scores_and_values):
 
     twi, tbi, tw1, tb1 = top_values
     swi, sbi, sw1, sb1 = second_values
-    max_vel = 12
-    rotation_vel = 5
-    _car_array.append(PlayerCar(max_vel, rotation_vel, twi, tbi, tw1, tb1))
-    _car_array.append(PlayerCar(max_vel, rotation_vel, swi, sbi, sw1, sb1))
 
-    for r in range(1, 10):
+    _car_array.append(PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL, twi, tbi, tw1, tb1))
+    _car_array.append(PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL, swi, sbi, sw1, sb1))
+    _car_array.append(PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL))
+    _car_array.append(PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL))
+
+    for r in range(1, 30):
         nwi = crossover(twi, swi, ratio, repetitions)
         nbi = crossover(tbi, sbi, ratio, repetitions, bias=True)
         nw1 = crossover(tw1, sw1, ratio, repetitions)
         nb1 = crossover(tb1, sb1, ratio, repetitions, bias=True)
-        _car_array.append(PlayerCar(max_vel, rotation_vel, nwi, nbi, nw1, nb1))
-    _car_array.append(PlayerCar(max_vel, rotation_vel, twi, tbi, tw1, tb1))
+        _car_array.append(PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL, nwi, nbi, nw1, nb1))
+    _car_array.append(PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL, twi, tbi, tw1, tb1))
     _last_ratio = ratio
     return _car_array, _last_ratio
 
@@ -84,7 +85,7 @@ def create_next_generation(_car_scores_and_values):
 car_array = []
 
 for j in range(1, 8):
-    temp = PlayerCar(100, 100)
+    temp = PlayerCar(settings.MAX_VEL, settings.ROTATION_VEL)
     car_array.append(temp)
 runs = 0
 car_scores_and_values = []
@@ -104,36 +105,37 @@ while run:
         if event.type == pygame.QUIT:
             run = False
             _car = copy_of_car_array[0]
-            _car.print_model()
+            # _car.print_model()
             _car.save_model()
             break
         elif event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
             pygame.draw.circle(settings.WIN, (0, 255, 0), pos, 2)
             print(pos)
-    if len(car_array) != 0 and runs <= 200 + 20 * num_of_bonus_lines_hit:
+    if len(car_array) != 0:
         runs += 1
         for c in car_array:
-            c.score -= 1
-            c.sense()
-            c.input_layer = np.append(c.input_layer, np.array(c.vel))
+            c.score -= 10
             c.take_action()
             for point in c.points_sensor:
                 if point is not None:
                     pygame.draw.circle(settings.WIN, *point)
             pygame.display.update()
-            if c.collide():
-                c.crash()
+            if c.collide() or runs >= 120 + 20 * (c.index_of_bonus_line + c.rounds_completed *
+                                                  len(settings.BONUS_LINES)):
+                if runs >= 120 + 20 * (c.index_of_bonus_line + c.rounds_completed *
+                                                  len(settings.BONUS_LINES)):
+                    c.crash(500)
                 car_scores_and_values.append((c.score, (c.weights_input_layer, c.bias_input_layer,
                                                         c.weights_l1, c.bias_l1)))
                 c.reset()
                 car_array.remove(c)
-
             else:
                 rect = c.img.get_rect(topleft=(c.x, c.y))
                 if rect.clipline(c.next_bonus_line):
                     if c.index_of_bonus_line >= len(settings.BONUS_LINES) - 1:
                         c.index_of_bonus_line = -1
+                        c.rounds_completed +=1
                     # print("BONUS!")
                     c.score += 1000
                     c.index_of_bonus_line += 1
@@ -156,6 +158,6 @@ while run:
         copy_of_car_array = car_array.copy()
         runs = 0
         generations += 1
-print(generations)
+print(generations, "Generations")
 
 pygame.quit()
