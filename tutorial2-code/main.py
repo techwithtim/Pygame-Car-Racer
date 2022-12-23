@@ -127,30 +127,25 @@ def main(genomes, config):
         if len(cars) != 0:
             runs += 1
             for x, car in enumerate(cars):
+                if runs%60 ==59:
+                    car.print_input_layer()
                 ge[x].fitness += 1
 
                 car.update_input_layer()
-                print(car.input_layer, "input_layer")
-                print(len(car.input_layer))
                 output = nets[x].activate(car.input_layer)
                 car.take_action(output)
+                car.move()
                 for point in car.points_sensor:
                     if point is not None:
                         pygame.draw.circle(settings.WIN, *point)
                 pygame.display.update()
-                if car.collide() or runs >= 40 + 20 * car.index_of_bonus_line +\
+                if car.collide() or runs >= 40 + 18 * car.index_of_bonus_line +\
                         car.rounds_completed * len(settings.BONUS_LINES):
-                    print("IVE COLLIDED AND IM A FAGA")
                     ge[x].fitness -= 10000
 
                     cars.pop(x)
                     nets.pop(x)
-                    ge.pop(x)
-                    # c.crash()
-                    # car_scores_and_values.append((c.score, (c.weights_input_layer, c.bias_input_layer,
-                    #                                         c.weights_l1, c.bias_l1)))
-                    # c.reset()
-                    # car_array.remove(c)
+                    ge.pop(x) #בייייייייייייייייייייייייייייייייייייייב תפסיק לתכנת
 
                 else:
                     rect = car.img.get_rect(topleft=(car.x, car.y))
@@ -161,8 +156,6 @@ def main(genomes, config):
                         # print("BONUS!")
                         ge[x].fitness += 1000
                         car.index_of_bonus_line += 1
-                        if car.index_of_bonus_line > num_of_bonus_lines_hit:
-                            num_of_bonus_lines_hit = car.index_of_bonus_line
                         car.next_bonus_line = settings.BONUS_LINES[car.index_of_bonus_line]
 
         else:
@@ -178,7 +171,7 @@ def run(_config_path):
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
 
-    winner = p.run(main,50)
+    winner = p.run(main, 1000)
     print(winner, "winner")
 
 

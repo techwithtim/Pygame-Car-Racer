@@ -54,11 +54,9 @@ class AbstractCar:
 
     def move_forward(self):
         self.vel = min(self.vel + self.acceleration, self.max_vel)
-        self.move()
 
     def move_backward(self):
-        self.vel = max(self.vel - self.acceleration, -1 * self.max_vel)
-        self.move()
+        self.vel = max(self.vel - self.acceleration*0.1, 0)
 
     def move(self):
         radians = math.radians(self.angle)
@@ -175,10 +173,11 @@ class AbstractCar:
         self.next_bonus_line = settings.BONUS_LINES[0]
         self.score = 0
 
+    def print_input_layer(self):
+        print("input layer:", self.input_layer)
+
     def take_action(self, output_layer):
-        print(output_layer, "this is what im working with 0_0")
         decided_action = np.argmax(output_layer)
-        print(decided_action, "Me smart to be")
         if decided_action == 0:
             self.move_forward()
 
