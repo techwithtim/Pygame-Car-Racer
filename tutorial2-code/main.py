@@ -127,9 +127,7 @@ def main(genomes, config):
         if len(cars) != 0:
             runs += 1
             for x, car in enumerate(cars):
-                if runs%60 ==59:
-                    car.print_input_layer()
-                ge[x].fitness += 1
+                ge[x].fitness -= 1
 
                 car.update_input_layer()
                 output = nets[x].activate(car.input_layer)
@@ -139,22 +137,20 @@ def main(genomes, config):
                     if point is not None:
                         pygame.draw.circle(settings.WIN, *point)
                 pygame.display.update()
-                if car.collide() or runs >= 40 + 18 * car.index_of_bonus_line + 18 * car.rounds_completed * len(settings.BONUS_LINES):
-                    if car.rounds_completed !=0:
-                        print(40 + 18 * car.index_of_bonus_line +
-                        car.rounds_completed * len(settings.BONUS_LINES))
+                if car.collide() or runs >= 40 + 18 * car.index_of_bonus_line +\
+                        18 * car.rounds_completed * len(settings.BONUS_LINES):
+
                     ge[x].fitness -= 10000
 
                     cars.pop(x)
                     nets.pop(x)
-                    ge.pop(x) #בייייייייייייייייייייייייייייייייייייייב תפסיק לתכנת
+                    ge.pop(x)
 
                 else:
                     rect = car.img.get_rect(topleft=(car.x, car.y))
                     if rect.clipline(car.next_bonus_line):
                         if car.index_of_bonus_line >= len(settings.BONUS_LINES) - 2:
                             car.rounds_completed += 1
-                            print("round completed")
                             car.index_of_bonus_line = 0
                         # print("BONUS!")
                         ge[x].fitness += 1000

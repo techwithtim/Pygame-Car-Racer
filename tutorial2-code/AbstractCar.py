@@ -56,7 +56,7 @@ class AbstractCar:
         self.vel = min(self.vel + self.acceleration, self.max_vel)
 
     def move_backward(self):
-        self.vel = max(self.vel - self.acceleration*0.1, 0)
+        self.vel = max(self.vel - self.acceleration*0.5, 0)
 
     def move(self):
         radians = math.radians(self.angle)
@@ -119,7 +119,7 @@ class AbstractCar:
                             dist = math.sqrt((x1 - x3) ** 2 + (y - y3) ** 2)
                             if shortest_point is None or shortest_point > dist:
                                 shortest_point = dist
-                                sensed_point = ((0, 0, 255), (x1, y), 5)
+                                sensed_point = ((255, 255, 0), (x1, y), 5)
                     elif x3 == x4:
                         y = int(((y2 - y1) / (x2 - x1)) * (x3 - x1) + y1)
                         if min(y3, y4) <= y <= max(y3, y4):
