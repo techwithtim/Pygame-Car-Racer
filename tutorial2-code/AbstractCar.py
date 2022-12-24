@@ -21,26 +21,8 @@ class AbstractCar:
         self.index_of_bonus_line = 0
         self.next_bonus_line = settings.BONUS_LINES[self.index_of_bonus_line]
         self.sensors = []
-        self.input_layer = numpy.zeros(settings.INPUT_LAYER_SHAPE)
         self.points_sensor = []
         self.rotation_side = 0  # 0 is right 1 is left
-        if _wi is not None:
-            self.weights_input_layer = _wi
-        else:
-            self.weights_input_layer = (2 * np.random.rand(*settings.WI_SHAPE) - 1)
-
-        if _bi is not None:
-            self.bias_input_layer = _bi
-        else:
-            self.bias_input_layer = (2 * np.random.rand(*settings.BI_SHAPE) - 1)
-        if _w1 is not None:
-            self.weights_l1 = _w1
-        else:
-            self.weights_l1 = (2 * np.random.rand(*settings.W1_SHAPE) - 1)
-        if _b1 is not None:
-            self.bias_l1 = _b1
-        else:
-            self.bias_l1 = (2 * np.random.rand(*settings.B1_SHAPE) - 1)
 
     def rotate(self, _left=False, _right=False):
         if _left:
@@ -66,18 +48,6 @@ class AbstractCar:
         self.y -= vertical
         self.x -= horizontal
 
-    def save_model(self):
-        with open('model.csv', 'a') as csvfile:
-            np.savetxt(csvfile, self.weights_input_layer, delimiter=',', header="Input Layer Weights")
-            np.savetxt(csvfile, self.bias_input_layer, delimiter=',', header='Input Layer Bias')
-            np.savetxt(csvfile, self.weights_l1, delimiter=',', header='Layer 1 Weights')
-            np.savetxt(csvfile, self.bias_l1, delimiter=',', header='Layer 1 Bias')
-
-    def print_model(self):
-        print("Wi:", self.weights_input_layer)
-        print("Bi:", self.bias_input_layer)
-        print("W1:", self.weights_l1)
-        print("B1:", self.bias_l1)
 
     def collide(self):
         car_rect = self.img.get_rect(x=self.x, y=self.y)
@@ -197,7 +167,6 @@ class AbstractCar:
 class PlayerCar(AbstractCar):
 
     IMG = settings.RED_CAR
-
 
     def reduce_speed(self):
         self.vel = max(self.vel - self.acceleration * 0.1, 0)

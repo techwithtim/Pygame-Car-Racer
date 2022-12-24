@@ -10,16 +10,18 @@ import math
 import pandas as pd
 from utils import *
 from AbstractCar import *
+import create_road
 
 
 def draw(_win, _player_cars):
     _win.fill("black")
     for bonus_line in settings.BONUS_LINES:
-        pygame.draw.line(settings.WIN, (0, 255, 255), *bonus_line)
+        pygame.draw.line(_win, (0, 100, 0), *bonus_line)
     i = 1
+
     for track_line in settings.TRACK_LINES:
         i += 1
-        pygame.draw.line(settings.WIN, (max(0, 255-i*10), 200, min(255, i * 10)), *track_line)
+        pygame.draw.line(_win, (max(0, 255), 200, min(255,0)), *track_line)
 
     for __car in _player_cars:
         __car.draw(_win)
@@ -81,6 +83,7 @@ def create_next_generation(_car_scores_and_values):
 
 
 def main(genomes, config):
+
     nets = []
     ge = []
     cars = []
@@ -101,20 +104,13 @@ def main(genomes, config):
 
 
     runs = 0
-    car_scores_and_values = []
-    generations = 0
 
-    copy_of_car_array = []
-
-    best_of_all_generation = (0, [])
-    last_ratio = 0
-    num_of_bonus_lines_hit = 1
-
+    win = pygame.display.set_mode(settings.WIN_SHAPE)
     while run:
         # print("buya", len(cars))
         clock.tick(settings.FPS)
         pygame.display.update()
-        draw(settings.WIN, cars)
+        draw(win, cars)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
@@ -122,7 +118,7 @@ def main(genomes, config):
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
-                pygame.draw.circle(settings.WIN, (0, 255, 0), pos, 2)
+                pygame.draw.circle(win, (0, 255, 0), pos, 2)
                 print(pos)
         if len(cars) != 0:
             runs += 1
@@ -135,9 +131,9 @@ def main(genomes, config):
                 car.move()
                 for point in car.points_sensor:
                     if point is not None:
-                        pygame.draw.circle(settings.WIN, *point)
+                        pygame.draw.circle(win, *point)
                 pygame.display.update()
-                if car.collide() or runs >= 40 + 18 * car.index_of_bonus_line +\
+                if car.collide() or runs >= 40 + 22 * car.index_of_bonus_line +\
                         18 * car.rounds_completed * len(settings.BONUS_LINES):
 
                     ge[x].fitness -= 10000
@@ -175,6 +171,14 @@ def run(_config_path):
 
 
 if __name__ == "__main__":
+    track_lines, bonus_lines, starting_position, win_size = create_road.main()
+    settings.TRACK_LINES = track_lines
+    settings.BONUS_LINES = bonus_lines
+    settings.STARTING_POSITION = starting_position
+    print("win size", win_size)
+    settings.WIN_SHAPE = win_size
+    # print(settings.WIN)
+    print(settings.WIN_SHAPE)
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, "config-feedforward.txt")
     run(config_path)
