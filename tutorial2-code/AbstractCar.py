@@ -20,9 +20,9 @@ class AbstractCar:
         self.rounds_completed = 0
         self.index_of_bonus_line = 0
         self.next_bonus_line = settings.BONUS_LINES[self.index_of_bonus_line]
+        # print(self.next_bonus_line, "my first bonus line")
         self.sensors = []
         self.points_sensor = []
-        self.rotation_side = 0  # 0 is right 1 is left
 
     def rotate(self, _left=False, _right=False):
         if _left:
@@ -47,7 +47,6 @@ class AbstractCar:
 
         self.y -= vertical
         self.x -= horizontal
-
 
     def collide(self):
         car_rect = self.img.get_rect(x=self.x, y=self.y)

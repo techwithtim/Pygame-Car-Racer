@@ -15,8 +15,24 @@ import create_road
 
 def draw(_win, _player_cars):
     _win.fill("black")
+    i = 0
+
     for bonus_line in settings.BONUS_LINES:
-        pygame.draw.line(_win, (0, 100, 0), *bonus_line)
+
+        if i % 6 == 0:
+            rgb = (255,0,0)
+        elif i % 6 == 1:
+            rgb = (255,160,0)
+        elif i % 6 == 2:
+            rgb = (255,255,0)
+        elif i % 6 == 3:
+            rgb = (0,255,0)
+        elif i % 6 == 4:
+            rgb = (0,0,255)
+        elif i % 6 == 5:
+            rgb = (100,0,200)
+        pygame.draw.line(_win, rgb, *bonus_line)
+        i+=1
     i = 1
 
     for track_line in settings.TRACK_LINES:
@@ -26,60 +42,6 @@ def draw(_win, _player_cars):
     for __car in _player_cars:
         __car.draw(_win)
     pygame.display.update()
-
-
-def create_next_generation(_car_scores_and_values):
-    _car_array = []
-    if len(_car_scores_and_values) <= 1:
-        return None
-
-    top_score, top_values = _car_scores_and_values.pop(0)
-    second_score, second_values = _car_scores_and_values.pop(0)
-
-    if top_score < second_score:
-        top_score += second_score
-        second_score = top_score - second_score
-        top_score -= second_score
-
-        temp_values = top_values
-        top_values = second_values
-        second_values = temp_values
-    repetitions = 0
-    for car in _car_scores_and_values:
-        score, values = car
-        if score == top_score:
-            repetitions += 1
-        if score > top_score:
-            top_score = score
-            top_values = values
-            repetitions = 0
-        elif score >= second_score:
-            second_score = score
-            second_values = values
-
-    if top_score <= 0:
-        ratio = 0
-    elif second_score <= 0:
-        ratio = 1
-    else:
-        ratio = top_score / (top_score + second_score)
-
-    twi, tbi, tw1, tb1 = top_values
-    swi, sbi, sw1, sb1 = second_values
-    max_vel = 12
-    rotation_vel = 5
-    _car_array.append(PlayerCar(max_vel, rotation_vel, twi, tbi, tw1, tb1))
-    _car_array.append(PlayerCar(max_vel, rotation_vel, swi, sbi, sw1, sb1))
-
-    for r in range(1, 10):
-        nwi = crossover(twi, swi, ratio, repetitions)
-        nbi = crossover(tbi, sbi, ratio, repetitions, bias=True)
-        nw1 = crossover(tw1, sw1, ratio, repetitions)
-        nb1 = crossover(tb1, sb1, ratio, repetitions, bias=True)
-        _car_array.append(PlayerCar(max_vel, rotation_vel, nwi, nbi, nw1, nb1))
-    _car_array.append(PlayerCar(max_vel, rotation_vel, twi, tbi, tw1, tb1))
-    _last_ratio = ratio
-    return _car_array, _last_ratio
 
 
 def main(genomes, config):
@@ -101,8 +63,6 @@ def main(genomes, config):
 
     clock = pygame.time.Clock()
 
-
-
     runs = 0
 
     win = pygame.display.set_mode(settings.WIN_SHAPE)
@@ -123,6 +83,7 @@ def main(genomes, config):
         if len(cars) != 0:
             runs += 1
             for x, car in enumerate(cars):
+
                 ge[x].fitness -= 1
 
                 car.update_input_layer()
@@ -133,10 +94,10 @@ def main(genomes, config):
                     if point is not None:
                         pygame.draw.circle(win, *point)
                 pygame.display.update()
-                if car.collide() or runs >= 40 + 22 * car.index_of_bonus_line +\
+                if car.collide() or runs >= 100 + 40 * car.index_of_bonus_line +\
                         18 * car.rounds_completed * len(settings.BONUS_LINES):
 
-                    ge[x].fitness -= 10000
+                    ge[x].fitness -= 5000
 
                     cars.pop(x)
                     nets.pop(x)
@@ -152,6 +113,7 @@ def main(genomes, config):
                         ge[x].fitness += 1000
                         car.index_of_bonus_line += 1
                         car.next_bonus_line = settings.BONUS_LINES[car.index_of_bonus_line]
+                        # print("this is my next bonus line,", car.next_bonus_line)
 
         else:
             break
@@ -177,8 +139,9 @@ if __name__ == "__main__":
     settings.STARTING_POSITION = starting_position
     print("win size", win_size)
     settings.WIN_SHAPE = win_size
-    # print(settings.WIN)
-    print(settings.WIN_SHAPE)
+    print("starting position", starting_position)
+    print("bonus lines", settings.BONUS_LINES)
+
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, "config-feedforward.txt")
     run(config_path)

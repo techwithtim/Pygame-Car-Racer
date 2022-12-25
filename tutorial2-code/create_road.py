@@ -1,7 +1,7 @@
 import random
 from operator import mul
 
-PADDING = 50
+PADDING = 60
 STARTING_POINT = (0, 0)
 
 
@@ -81,6 +81,7 @@ def from_path_to_board_coordinates(path):
 def from_points_coordinates_to_path_boarders(on_window_points_coordinates):
     path_boarders = []
     bonus_lines = []
+
     print(on_window_points_coordinates)
 
     for i in range(-2, len(on_window_points_coordinates) - 2):
@@ -120,7 +121,8 @@ def from_points_coordinates_to_path_boarders(on_window_points_coordinates):
             bonus_line_point_a = ((point_a[0] + point_b[0])/2, point_a[1] + PADDING/2)
             bonus_line_point_b = ((point_a[0] + point_b[0])/2, point_a[1] - PADDING/2)
         bonus_lines.append((bonus_line_point_a, bonus_line_point_b))
-
+    for i in range(2):
+        bonus_lines.append(bonus_lines.pop(0))
     return path_boarders, bonus_lines
 
 
