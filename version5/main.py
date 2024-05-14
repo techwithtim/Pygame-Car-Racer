@@ -2,20 +2,20 @@ import pygame, time, math
 from utils import scale_image, blit_rotate_center, blit_text_center
 pygame.font.init()
 
-GRASS = scale_image(pygame.image.load("tutorial4-code/imgs/grass.jpg"), 2.5)
-TRACK = scale_image(pygame.image.load("tutorial4-code/imgs/track.png"), 0.9)
+GRASS = scale_image(pygame.image.load("version5/imgs/grass.jpg"), 2.5)
+TRACK = scale_image(pygame.image.load("version5/imgs/track.png"), 0.9)
 
-TRACK_BORDER = scale_image(pygame.image.load("tutorial4-code/imgs/track-border2.png"), 0.9)
+TRACK_BORDER = scale_image(pygame.image.load("version5/imgs/track-border2.png"), 0.9)
 TRACK_BORDER_MASK = pygame.mask.from_surface(TRACK_BORDER)
 TRACK_BORDER_RECT = TRACK_BORDER.get_rect()
 
-FINISH = pygame.image.load("tutorial4-code/imgs/finish.png")
+FINISH = pygame.image.load("version5/imgs/finish.png")
 FINISH_MASK = pygame.mask.from_surface(FINISH)
 FINISH_POSITION = (130, 250)
 
-RED_CAR = scale_image(pygame.image.load("tutorial4-code/imgs/red-car.png"), 0.55)
-WHITE_CAR = scale_image(pygame.image.load("tutorial4-code/imgs/white-car.png"), 0.55)
-GREEN_CAR = scale_image(pygame.image.load("tutorial4-code/imgs/green-car.png"), 0.55)
+RED_CAR = scale_image(pygame.image.load("version5/imgs/red-car.png"), 0.55)
+WHITE_CAR = scale_image(pygame.image.load("version5/imgs/white-car.png"), 0.55)
+GREEN_CAR = scale_image(pygame.image.load("version5/imgs/green-car.png"), 0.55)
 
 WIDTH, HEIGHT = TRACK.get_width(), TRACK.get_height() 
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
